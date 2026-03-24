@@ -392,7 +392,7 @@ export default function Dashboard() {
               ) : (
                 <>
                   <Sparkles className="w-4 h-4" />
-                  ابدأ التصحيح الذكي
+                  <span className="text-yellow-300">ابدأ التصحيح الذكي</span>
                 </>
               )}
             </button>
