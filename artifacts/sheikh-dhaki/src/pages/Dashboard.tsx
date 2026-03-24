@@ -4,7 +4,7 @@ import { differenceInDays } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, Trash2, CalendarDays, Upload, ChevronDown,
-  Image as ImageIcon, XCircle, LogOut, MessageSquare, Moon, Sun, Copy, Check, Lock
+  Image as ImageIcon, XCircle, LogOut, MessageSquare, Moon, Sun, Copy, Check
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "wouter";
@@ -23,27 +23,6 @@ type HistoryItem = {
 
 const SHOBAS = ["علوم تجريبية", "رياضيات", "تقني رياضي", "لغات", "آداب", "تسيير"];
 const BAC_DATE = new Date(2026, 5, 15);
-const MAX_FREE_DAILY = 3;
-const DAILY_KEY = "dhaki-daily";
-
-function getDailyCount(): number {
-  const today = new Date().toISOString().slice(0, 10);
-  const stored = localStorage.getItem(DAILY_KEY);
-  if (!stored) return 0;
-  try {
-    const parsed = JSON.parse(stored);
-    if (parsed.date !== today) return 0;
-    return parsed.count ?? 0;
-  } catch {
-    return 0;
-  }
-}
-
-function incrementDailyCount(): void {
-  const today = new Date().toISOString().slice(0, 10);
-  const current = getDailyCount();
-  localStorage.setItem(DAILY_KEY, JSON.stringify({ date: today, count: current + 1 }));
-}
 
 function useDarkModeToggle() {
   const getInitial = () => {
@@ -85,29 +64,6 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-function LockScreen() {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center justify-center py-20 text-center px-6"
-    >
-      <div className="w-24 h-24 rounded-3xl bg-amber-100 dark:bg-amber-900/30 border-2 border-amber-400/50 flex items-center justify-center mb-6 shadow-lg">
-        <Lock className="w-12 h-12 text-amber-500" />
-      </div>
-      <h2 className="text-xl font-black text-foreground mb-3">انتهت الفترة التجريبية</h2>
-      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300/60 rounded-2xl p-5 max-w-md text-sm leading-relaxed text-foreground/85 shadow-inner">
-        <p className="font-bold text-base mb-2 text-amber-700 dark:text-amber-400">🔒 نظام الشيخ الذكي</p>
-        <p>
-          انتهت الفترة التجريبية. للوصول للحلول اللامتناهية وتوقعات 2026، يرجى تفعيل اشتراك <strong>VIP</strong> عبر بوابة{" "}
-          <span className="font-black text-amber-600 dark:text-amber-400">بريدي موب</span>.
-        </p>
-      </div>
-      <p className="text-xs text-muted-foreground mt-5">يتجدد العداد المجاني تلقائياً كل يوم في منتصف الليل</p>
-    </motion.div>
-  );
-}
-
 export default function Dashboard() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedShoba, setSelectedShoba] = useState(SHOBAS[0]);
@@ -116,8 +72,6 @@ export default function Dashboard() {
   const [notes, setNotes] = useState("");
   const [isPending, setIsPending] = useState(false);
   const [streamingText, setStreamingText] = useState("");
-  const [dailyCount, setDailyCount] = useState(() => getDailyCount());
-  const [isLocked, setIsLocked] = useState(false);
   const { logout } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -125,7 +79,6 @@ export default function Dashboard() {
   const boardRef = useRef<HTMLDivElement>(null);
   const { isDark, toggle } = useDarkModeToggle();
   const daysLeft = Math.max(0, differenceInDays(BAC_DATE, new Date()));
-  const remaining = Math.max(0, MAX_FREE_DAILY - dailyCount);
 
   useEffect(() => {
     return () => { if (previewUrl) URL.revokeObjectURL(previewUrl); };
@@ -172,15 +125,8 @@ export default function Dashboard() {
       return;
     }
 
-    const currentCount = getDailyCount();
-    if (currentCount >= MAX_FREE_DAILY) {
-      setIsLocked(true);
-      return;
-    }
-
     setIsPending(true);
     setStreamingText("");
-    setIsLocked(false);
 
     const savedPreview = previewUrl ? URL.createObjectURL(file) : null;
 
@@ -225,13 +171,6 @@ export default function Dashboard() {
               }
             }
             if (data.done) {
-              incrementDailyCount();
-              const newCount = getDailyCount();
-              setDailyCount(newCount);
-              if (newCount >= MAX_FREE_DAILY) {
-                setIsLocked(true);
-              }
-
               const id = crypto.randomUUID();
               setHistory(prev => [{
                 id,
@@ -298,12 +237,6 @@ export default function Dashboard() {
               {daysLeft}
             </div>
             <p className="text-xs font-semibold text-highlight/65 mt-0.5">يوم</p>
-          </div>
-
-          {/* Daily Counter */}
-          <div className={`rounded-xl p-3 flex items-center justify-between text-xs font-bold border ${remaining === 0 ? "bg-red-50 dark:bg-red-900/20 border-red-300/50 text-red-600 dark:text-red-400" : "bg-amber-50 dark:bg-amber-900/20 border-amber-300/50 text-amber-700 dark:text-amber-400"}`}>
-            <span>التجارب المجانية المتبقية اليوم</span>
-            <span className="text-lg font-black">{remaining} / {MAX_FREE_DAILY}</span>
           </div>
 
           <div className="h-px bg-border" />
@@ -376,18 +309,13 @@ export default function Dashboard() {
           <div className="mt-auto pt-1">
             <button
               onClick={handleSubmit}
-              disabled={isPending || !file || remaining === 0}
+              disabled={isPending || !file}
               className="w-full bg-gradient-to-l from-primary to-accent text-primary-foreground font-black text-sm rounded-xl py-3.5 px-5 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
             >
               {isPending ? (
                 <>
                   <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
                   الأستاذ يدقق...
-                </>
-              ) : remaining === 0 ? (
-                <>
-                  <Lock className="w-4 h-4" />
-                  فعّل اشتراك VIP
                 </>
               ) : (
                 <>
@@ -396,14 +324,9 @@ export default function Dashboard() {
                 </>
               )}
             </button>
-            {!file && remaining > 0 && (
+            {!file && (
               <p className="text-center text-xs text-muted-foreground mt-2">
                 ارفع صورة التمرين أولاً
-              </p>
-            )}
-            {remaining === 0 && (
-              <p className="text-center text-xs text-amber-600 dark:text-amber-400 font-bold mt-2">
-                انتهت التجارب المجانية لهذا اليوم
               </p>
             )}
           </div>
@@ -425,9 +348,6 @@ export default function Dashboard() {
               </button>
             )}
           </div>
-
-          {/* Lock Screen */}
-          {isLocked && <LockScreen />}
 
           {/* Streaming Result */}
           <AnimatePresence>
@@ -453,7 +373,7 @@ export default function Dashboard() {
           </AnimatePresence>
 
           {/* History */}
-          {!streamingText && !isLocked && history.length === 0 ? (
+          {!streamingText && history.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
               <div className="w-20 h-20 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center mb-5">
                 <MessageSquare className="w-10 h-10 text-primary/40" />
