@@ -201,9 +201,10 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col md:flex-row">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <div className="flex flex-col md:flex-row flex-1 min-h-0">
       {/* SIDEBAR */}
-      <aside className="w-full md:w-80 lg:w-96 bg-card border-l border-border flex flex-col shrink-0 shadow-xl overflow-y-auto max-h-screen">
+      <aside className="w-full md:w-80 lg:w-96 bg-card border-l border-border flex flex-col shrink-0 shadow-xl overflow-y-auto">
         <div className="p-6 flex-1 flex flex-col gap-5">
           {/* Header */}
           <div className="flex items-center justify-between">
@@ -430,6 +431,17 @@ export default function Dashboard() {
           )}
         </div>
       </main>
+      </div>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-card py-2 text-center">
+        <a
+          href="/privacy"
+          className="text-xs text-muted-foreground hover:text-primary transition-colors"
+        >
+          سياسة الخصوصية (Privacy Policy)
+        </a>
+      </footer>
     </div>
   );
 }

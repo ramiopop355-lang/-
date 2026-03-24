@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import NotFound from "@/pages/not-found";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
+import Privacy from "@/pages/Privacy";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } },
@@ -25,6 +26,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
+      <Route path="/privacy" component={Privacy} />
       <Route path="/">
         <ProtectedRoute component={Dashboard} />
       </Route>
