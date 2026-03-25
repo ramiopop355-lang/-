@@ -21,7 +21,7 @@ type HistoryItem = {
   imagePreview?: string;
 };
 
-const SHOBAS = ["علوم تجريبية", "رياضيات"];
+const SHOBAS = ["رياضيات", "علوم تجريبية", "تقني رياضي", "علوم وتكنولوجيا"];
 const BAC_DATE = new Date(2026, 5, 15);
 
 function useDarkModeToggle() {
@@ -210,7 +210,7 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-black text-foreground">الشيخ الذكي</h2>
-              <p className="text-xs text-highlight/75">مختبر التصحيح الذكي 2026</p>
+              <p className="text-xs text-highlight/75">مختبر الرياضيات الذكي 2026</p>
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -381,7 +381,7 @@ export default function Dashboard() {
               </div>
               <h3 className="text-base font-bold text-foreground mb-2">السبورة فارغة</h3>
               <p className="text-sm text-highlight/65 max-w-xs">
-                ارفع صورة تمرينك واختر شعبتك وسيصحح الشيخ الذكي تمرينك فوراً
+                ارفع صورة تمرين الرياضيات واختر شعبتك وسيصحح الشيخ الذكي تمرينك فوراً
               </p>
             </div>
           ) : (
