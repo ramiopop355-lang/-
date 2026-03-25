@@ -1,6 +1,5 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
-import { openai } from "@workspace/integrations-openai-ai-server";
 
 const router: IRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -135,6 +134,7 @@ ${notes ? `ملاحظة الطالب: ${notes}` : ""}
 
 قيّم محاولة الطالب وفق الهيكل البيداغوجي الإلزامي ومنهاج البكالوريا الجزائرية 2026.`;
 
+      const { openai } = await import("@workspace/integrations-openai-ai-server");
       const stream = await openai.chat.completions.create({
         model: "gpt-5.2",
         max_completion_tokens: 8192,

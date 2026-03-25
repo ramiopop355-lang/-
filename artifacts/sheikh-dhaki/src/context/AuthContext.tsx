@@ -1,21 +1,49 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+
+interface AuthUser {
+  username: string;
+  phone: string;
+  activated: boolean;
+}
 
 interface AuthContextType {
   isLoggedIn: boolean;
-  login: () => void;
+  user: AuthUser | null;
+  token: string | null;
+  login: (token: string, user: AuthUser) => void;
   logout: () => void;
 }
+
+const AUTH_KEY = "ustad-auth-token";
+const USER_KEY = "ustad-auth-user";
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(AUTH_KEY));
+  const [user, setUser] = useState<AuthUser | null>(() => {
+    const stored = localStorage.getItem(USER_KEY);
+    return stored ? JSON.parse(stored) : null;
+  });
 
-  const login = () => setIsLoggedIn(true);
-  const logout = () => setIsLoggedIn(false);
+  const isLoggedIn = !!token && !!user;
+
+  const login = (newToken: string, newUser: AuthUser) => {
+    localStorage.setItem(AUTH_KEY, newToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    setToken(newToken);
+    setUser(newUser);
+  };
+
+  const logout = () => {
+    localStorage.removeItem(AUTH_KEY);
+    localStorage.removeItem(USER_KEY);
+    setToken(null);
+    setUser(null);
+  };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
