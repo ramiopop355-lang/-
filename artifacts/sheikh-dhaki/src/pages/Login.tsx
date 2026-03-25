@@ -106,7 +106,7 @@ export default function Login() {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirm, setRegConfirm] = useState("");
 
-  const { login } = useAuth();
+  const { login, token: authToken, updateUser } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { isDark, toggle } = useDarkModeToggle();
@@ -169,14 +169,36 @@ export default function Login() {
     }
   };
 
-  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      setIsUploading(true);
-      setTimeout(() => {
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return;
+    setIsUploading(true);
+    try {
+      if (!authToken || authToken === "trial") {
+        toast({
+          title: "سجّل الدخول أولاً",
+          description: "أنشئ حساباً أو ادخل لحسابك ثم افتح نافذة التفعيل",
+          variant: "destructive",
+        });
         setIsUploading(false);
-        setUploaded(true);
-        toast({ title: "تم استقبال الوصل!", description: "سيتم تفعيل حسابك خلال دقائق." });
-      }, 1800);
+        return;
+      }
+      const res = await fetch("/api/auth/activate", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${authToken}` },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: "فشل التفعيل", description: data.error ?? "خطأ غير معروف", variant: "destructive" });
+        setIsUploading(false);
+        return;
+      }
+      updateUser(data.token, data.user);
+      setUploaded(true);
+      toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
+    } catch {
+      toast({ title: "خطأ في الاتصال", description: "تأكد من اتصالك بالإنترنت", variant: "destructive" });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -488,15 +510,19 @@ export default function Login() {
                     <motion.div key="pay2" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.15 }} className="space-y-3">
                       {uploaded ? (
                         <div className="flex flex-col items-center gap-3 py-6">
-                          <div className="w-12 h-12 rounded-full border-2 flex items-center justify-center" style={{ background: "rgba(34,197,94,0.1)", borderColor: "rgba(34,197,94,0.35)" }}>
-                            <CheckCircle2 className="w-6 h-6" style={{ color: "#22c55e" }} />
+                          <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(34,197,94,0.12)", border: "2px solid rgba(34,197,94,0.4)" }}>
+                            <CheckCircle2 className="w-7 h-7" style={{ color: "#22c55e" }} />
                           </div>
                           <div className="text-center">
-                            <p className="text-sm font-bold text-foreground mb-0.5">تم استقبال الوصل!</p>
-                            <p className="text-xs text-muted-foreground">سيتم تفعيل حسابك خلال دقائق</p>
+                            <p className="text-base font-black text-foreground mb-0.5">🎉 تم تفعيل حسابك!</p>
+                            <p className="text-xs text-muted-foreground">يمكنك الآن الاستخدام غير المحدود</p>
                           </div>
-                          <button onClick={() => { setShowPayment(false); setPayStep(1); setUploaded(false); }} className="text-xs text-primary font-bold hover:underline">
-                            إغلاق
+                          <button
+                            onClick={() => { setShowPayment(false); setPayStep(1); setUploaded(false); setLocation("/"); }}
+                            className="w-full flex items-center justify-center gap-2 font-bold text-sm rounded-xl py-2.5 text-white transition-all hover:-translate-y-px"
+                            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", boxShadow: "0 4px 12px rgba(34,197,94,0.3)" }}
+                          >
+                            <Zap className="w-4 h-4" /> انطلق للتطبيق
                           </button>
                         </div>
                       ) : (

@@ -12,6 +12,7 @@ interface AuthContextType {
   token: string | null;
   login: (token: string, user: AuthUser) => void;
   logout: () => void;
+  updateUser: (token: string, user: AuthUser) => void;
 }
 
 const AUTH_KEY = "ustad-auth-token";
@@ -42,8 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const updateUser = (newToken: string, newUser: AuthUser) => {
+    localStorage.setItem(AUTH_KEY, newToken);
+    localStorage.setItem(USER_KEY, JSON.stringify(newUser));
+    setToken(newToken);
+    setUser(newUser);
+  };
+
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, token, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, user, token, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

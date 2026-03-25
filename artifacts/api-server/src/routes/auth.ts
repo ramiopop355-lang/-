@@ -87,6 +87,47 @@ router.post("/auth/register", async (req, res) => {
   }
 });
 
+router.post("/auth/activate", async (req, res) => {
+  try {
+    const authHeader = req.headers["authorization"] ?? "";
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    if (!token) {
+      return res.status(401).json({ error: "يجب تسجيل الدخول أولاً قبل التفعيل" });
+    }
+
+    let payload: { username: string } & Record<string, unknown>;
+    try {
+      payload = jwt.verify(token, JWT_SECRET) as typeof payload;
+    } catch {
+      return res.status(401).json({ error: "جلسة منتهية، أعد تسجيل الدخول" });
+    }
+
+    const user = await getUser(payload.username);
+    if (!user) {
+      return res.status(404).json({ error: "الحساب غير موجود" });
+    }
+
+    const updatedUser: User = { ...user, activated: true };
+    await db.set(userKey(user.username), JSON.stringify(updatedUser));
+
+    const newToken = jwt.sign(
+      { username: user.username, phone: user.phone, activated: true },
+      JWT_SECRET,
+      { expiresIn: "30d" }
+    );
+
+    return res.json({
+      success: true,
+      message: "تم تفعيل الحساب بنجاح!",
+      token: newToken,
+      user: { username: user.username, phone: user.phone, activated: true },
+    });
+  } catch (err) {
+    console.error("Activate error:", err);
+    return res.status(500).json({ error: "خطأ في الخادم، حاول مجدداً" });
+  }
+});
+
 router.post("/auth/login", async (req, res) => {
   try {
     const { username, password } = req.body as {
