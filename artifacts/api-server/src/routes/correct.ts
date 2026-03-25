@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const router: IRouter = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -100,6 +101,12 @@ router.post(
   ]),
   async (req, res) => {
     try {
+      const apiKey = process.env["GEMINI_API_KEY"];
+      if (!apiKey) {
+        res.status(500).json({ error: "مفتاح Gemini API غير مضبوط" });
+        return;
+      }
+
       const shoba = (req.body.shoba as string) || "رياضيات";
       const notes = (req.body.notes as string) || "";
       const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
@@ -134,43 +141,32 @@ ${notes ? `ملاحظة الطالب: ${notes}` : ""}
 
 قيّم محاولة الطالب وفق الهيكل البيداغوجي الإلزامي ومنهاج البكالوريا الجزائرية 2026.`;
 
-      const { openai } = await import("@workspace/integrations-openai-ai-server");
-      const stream = await openai.chat.completions.create({
-        model: "gpt-5.2",
-        max_completion_tokens: 8192,
-        messages: [
-          { role: "system", content: SYSTEM_PROMPT },
-          {
-            role: "user",
-            content: [
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${exerciseMime};base64,${exerciseBase64}`,
-                  detail: "high",
-                },
-              },
-              {
-                type: "image_url",
-                image_url: {
-                  url: `data:${attemptMime};base64,${attemptBase64}`,
-                  detail: "high",
-                },
-              },
-              {
-                type: "text",
-                text: userMessage,
-              },
-            ],
-          },
-        ],
-        stream: true,
+      const genai = new GoogleGenerativeAI(apiKey);
+      const model = genai.getGenerativeModel({
+        model: "gemini-2.5-flash-preview-04-17",
+        systemInstruction: SYSTEM_PROMPT,
       });
 
-      for await (const chunk of stream) {
-        const content = chunk.choices[0]?.delta?.content;
-        if (content) {
-          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      const result = await model.generateContentStream([
+        {
+          inlineData: {
+            data: exerciseBase64,
+            mimeType: exerciseMime,
+          },
+        },
+        {
+          inlineData: {
+            data: attemptBase64,
+            mimeType: attemptMime,
+          },
+        },
+        userMessage,
+      ]);
+
+      for await (const chunk of result.stream) {
+        const text = chunk.text();
+        if (text) {
+          res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
         }
       }
 
@@ -178,6 +174,7 @@ ${notes ? `ملاحظة الطالب: ${notes}` : ""}
       res.end();
     } catch (err) {
       const message = err instanceof Error ? err.message : "خطأ في الخادم";
+      console.error("Correct error:", err);
       if (!res.headersSent) {
         res.status(500).json({ error: message });
       } else {
