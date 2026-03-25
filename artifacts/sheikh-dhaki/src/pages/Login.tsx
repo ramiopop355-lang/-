@@ -79,7 +79,7 @@ function InputField({
   const inputType = showToggle ? (visible ? "text" : "password") : type;
   return (
     <div className="space-y-1.5">
-      <label className="text-xs font-bold text-foreground/75">{label}</label>
+      <label className="text-xs font-semibold text-muted-foreground">{label}</label>
       <div className="relative flex items-center">
         <div className="absolute right-3 text-muted-foreground pointer-events-none">
           <Icon className="w-4 h-4" />
@@ -234,7 +234,7 @@ export default function Login() {
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
               <h1 className="text-xl font-black text-foreground tracking-tight mb-0.5">أستاذ الرياضيات</h1>
-              <p className="text-xs text-highlight/80 leading-relaxed">مصحح رياضيات الباك بالمنهجية الجزائرية 2026</p>
+              <p className="text-xs text-primary/70 leading-relaxed">مصحح رياضيات الباك بالمنهجية الجزائرية 2026</p>
             </motion.div>
           </div>
 
@@ -411,7 +411,7 @@ export default function Login() {
                         </div>
                         <div className="bg-muted/50 rounded-2xl p-3.5 space-y-2.5">
                           <div className="flex justify-between items-center">
-                            <span className="text-xs text-highlight/75">المبلغ</span>
+                            <span className="text-xs text-muted-foreground">المبلغ</span>
                             <div className="text-left flex flex-col items-end gap-0.5">
                               <span className="text-xs text-muted-foreground line-through">1000 دج</span>
                               <span className="text-base font-black" style={{ color: "#16a34a" }}>500 دج</span>
@@ -422,12 +422,12 @@ export default function Login() {
                           </div>
                           <div className="h-px bg-border" />
                           <div className="flex justify-between items-center">
-                            <span className="text-xs text-highlight/75">الطريقة</span>
+                            <span className="text-xs text-muted-foreground">الطريقة</span>
                             <span className="text-sm font-bold text-foreground">بريدي موب</span>
                           </div>
                           <div className="h-px bg-border" />
                           <div className="space-y-1.5">
-                            <span className="text-xs text-highlight/75">رقم RIP</span>
+                            <span className="text-xs text-muted-foreground">رقم RIP</span>
                             <RIPCopyField rip="00799999002789880450" />
                           </div>
                         </div>
@@ -461,7 +461,7 @@ export default function Login() {
                             </div>
                             <div className="text-center">
                               <p className="text-sm font-bold text-foreground mb-0.5">تم استقبال الوصل!</p>
-                              <p className="text-xs text-highlight/70">سيتم تفعيل حسابك خلال دقائق</p>
+                              <p className="text-xs text-muted-foreground">سيتم تفعيل حسابك خلال دقائق</p>
                             </div>
                             <button onClick={() => setTab("login")} className="text-xs text-primary font-bold hover:underline">
                               الذهاب إلى الدخول
@@ -483,7 +483,7 @@ export default function Login() {
                                   </div>
                                   <div className="text-center">
                                     <p className="text-sm font-semibold text-foreground">اختر صورة الوصل</p>
-                                    <p className="text-xs text-highlight/70 mt-0.5">JPG, PNG · التفعيل فوري</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5">JPG, PNG · التفعيل فوري</p>
                                   </div>
                                 </>
                               )}
@@ -504,7 +504,7 @@ export default function Login() {
 
           {/* Footer */}
           <div className="border-t border-border px-6 py-3 flex items-center justify-between">
-            <p className="text-xs text-highlight/70">© منصة حل عقدة الباك 2026</p>
+            <p className="text-xs text-muted-foreground">© منصة حل عقدة الباك 2026</p>
             <button
               onClick={toggle}
               className="w-7 h-7 rounded-full border border-border bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-border/80 transition-all"
