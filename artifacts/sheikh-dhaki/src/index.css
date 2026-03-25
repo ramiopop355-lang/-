@@ -34,53 +34,49 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* ══════════════════════════════
-   الوضع النهاري — أزرق-أصفر حيوي
-   ══════════════════════════════ */
 :root {
-  --highlight: 217 65% 35%;          /* أزرق غامق للنصوص الثانوية */
-  --background: 210 55% 97%;         /* خلفية زرقاء فاتحة جداً */
-  --foreground: 220 50% 10%;         /* نص رئيسي أسود-أزرق عميق */
-  --card: 0 0% 100%;                  /* بطاقات بيضاء نقية */
-  --card-foreground: 220 50% 10%;
-  --primary: 217 88% 50%;            /* أزرق حيوي واضح */
+  /* LIGHT MODE — خلفية صفراء باهتة #FFF9E3 */
+  --highlight: 38 62% 50%;
+  --background: 46 100% 95%;
+  --foreground: 222 30% 18%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 30% 18%;
+  --primary: 221 62% 50%;
   --primary-foreground: 0 0% 100%;
-  --secondary: 44 85% 88%;           /* أصفر فاتح للعناصر الثانوية */
-  --secondary-foreground: 220 55% 20%;
-  --accent: 43 95% 50%;              /* أصفر مضيء */
-  --accent-foreground: 220 55% 12%;
-  --muted: 210 35% 92%;              /* خلفية عناصر مؤتمة */
-  --muted-foreground: 218 30% 36%;   /* نص ثانوي — داكن بما يكفي للقراءة */
-  --border: 210 28% 78%;             /* حدود واضحة */
-  --input: 210 28% 78%;
-  --ring: 217 88% 50%;
-  --destructive: 0 72% 52%;
-  --destructive-foreground: 0 0% 100%;
+  --secondary: 218 40% 92%;
+  --secondary-foreground: 221 50% 38%;
+  --accent: 221 55% 42%;
+  --accent-foreground: 0 0% 100%;
+  --muted: 220 20% 93%;
+  --muted-foreground: 220 14% 50%;
+  --border: 220 18% 88%;
+  --input: 220 18% 88%;
+  --ring: 221 62% 50%;
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 0 0% 98%;
   --radius: 0.75rem;
 }
 
-/* ══════════════════════════════
-   الوضع الليلي — أزرق داكن-أصفر
-   ══════════════════════════════ */
 .dark {
-  --highlight: 43 90% 65%;           /* أصفر-ذهبي مضيء للنصوص الثانوية */
-  --background: 220 38% 8%;          /* خلفية زرقاء داكنة عميقة */
-  --foreground: 210 20% 94%;         /* نص أبيض-رمادي فاتح */
-  --card: 220 32% 13%;               /* بطاقات أزرق داكن أفتح من الخلفية */
-  --card-foreground: 210 20% 94%;
-  --primary: 217 85% 65%;            /* أزرق مضيء في الداكن */
-  --primary-foreground: 220 38% 8%;
-  --secondary: 220 28% 20%;          /* عناصر ثانوية داكنة */
-  --secondary-foreground: 210 20% 85%;
-  --accent: 43 95% 55%;              /* أصفر مضيء يبرز في الداكن */
-  --accent-foreground: 220 38% 8%;
-  --muted: 220 25% 17%;              /* خلفية عناصر مؤتمة */
-  --muted-foreground: 210 18% 68%;   /* نص ثانوي — فاتح بما يكفي في الداكن */
-  --border: 220 22% 26%;             /* حدود واضحة في الداكن */
-  --input: 220 22% 26%;
-  --ring: 217 85% 65%;
-  --destructive: 0 65% 55%;
-  --destructive-foreground: 0 0% 100%;
+  /* DARK MODE — داكن هادئ غير ساطع */
+  --highlight: 40 55% 65%;
+  --background: 224 28% 10%;
+  --foreground: 220 20% 90%;
+  --card: 224 24% 14%;
+  --card-foreground: 220 20% 90%;
+  --primary: 221 58% 62%;
+  --primary-foreground: 224 28% 10%;
+  --secondary: 222 22% 20%;
+  --secondary-foreground: 220 20% 85%;
+  --accent: 221 50% 55%;
+  --accent-foreground: 224 28% 10%;
+  --muted: 222 20% 18%;
+  --muted-foreground: 220 14% 55%;
+  --border: 222 18% 22%;
+  --input: 222 18% 22%;
+  --ring: 221 58% 62%;
+  --destructive: 0 55% 45%;
+  --destructive-foreground: 0 0% 98%;
 }
 
 @layer base {
@@ -97,24 +93,11 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-bold;
   }
-  /* تأكيد وضوح النصوص في كلا الوضعين */
-  p, span, label, div {
-    text-rendering: optimizeLegibility;
-  }
 }
 
 @layer utilities {
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
-  ::-webkit-scrollbar-thumb:hover { @apply bg-primary/40; }
-
-  .card-pro {
-    @apply bg-card border border-border rounded-2xl shadow-sm shadow-black/5;
-  }
-
-  /* نص ثانوي واضح في كلا الوضعين */
-  .text-secondary-label {
-    @apply text-xs font-bold text-foreground/60;
-  }
+  ::-webkit-scrollbar-thumb { @apply bg-primary/20 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-primary/35; }
 }
