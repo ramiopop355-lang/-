@@ -353,59 +353,91 @@ export default function Dashboard() {
 
           {/* Trial badge */}
           {!trialExpired ? (
-            <div className="rounded-2xl border-2 border-green-500/40 bg-gradient-to-br from-green-500/15 to-emerald-500/8 px-4 py-3 space-y-2.5 shadow-sm shadow-green-500/10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-green-500/20 border border-green-500/40 flex items-center justify-center">
-                    <span className="text-sm">🎁</span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-green-600 dark:text-green-400 leading-tight">نسخة تجريبية مجانية</p>
-                    <p className="text-xs text-green-600/65 dark:text-green-500/55 leading-tight">
-                      باقي <span className="font-black text-green-600 dark:text-green-400">{trialRemaining}</span> من {TRIAL_MAX}
-                    </p>
-                  </div>
+            <div
+              className="rounded-2xl px-4 py-3 space-y-2.5"
+              style={{
+                background: "linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.06) 100%)",
+                border: "2px solid rgba(34,197,94,0.45)",
+                boxShadow: "0 2px 8px rgba(34,197,94,0.12)",
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(34,197,94,0.18)", border: "1px solid rgba(34,197,94,0.4)" }}
+                >
+                  <span className="text-sm">🎁</span>
+                </div>
+                <div>
+                  <p className="text-xs font-black leading-tight" style={{ color: "#16a34a" }}>نسخة تجريبية مجانية</p>
+                  <p className="text-xs leading-tight" style={{ color: "rgba(22,163,74,0.75)" }}>
+                    باقي <span className="font-black" style={{ color: "#16a34a" }}>{trialRemaining}</span> من {TRIAL_MAX} استخدامات
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-1.5">
                 {Array.from({ length: TRIAL_MAX }).map((_, i) => (
-                  <div key={i} className="flex-1 h-2 rounded-full overflow-hidden bg-green-200/50 dark:bg-green-900/40">
+                  <div
+                    key={i}
+                    className="flex-1 h-2.5 rounded-full overflow-hidden"
+                    style={{ background: "rgba(34,197,94,0.18)" }}
+                  >
                     <div
-                      className={`h-full rounded-full transition-all duration-300 ${
+                      className="h-full w-full rounded-full transition-all duration-300"
+                      style={
                         i < trialUsed
-                          ? "bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]"
-                          : "bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]"
-                      }`}
-                      style={{ width: "100%" }}
+                          ? { background: "#ef4444", boxShadow: "0 0 6px rgba(239,68,68,0.7)" }
+                          : { background: "#22c55e", boxShadow: "0 0 6px rgba(34,197,94,0.7)" }
+                      }
                     />
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-green-600/55 dark:text-green-500/45 text-center">
+              <p className="text-xs text-center" style={{ color: "rgba(22,163,74,0.65)" }}>
                 {trialUsed === 0
                   ? "استمتع بـ 3 تصحيحات مجانية 🎉"
                   : `استعملت ${trialUsed} من ${TRIAL_MAX} — باقي ${trialRemaining}`}
               </p>
             </div>
           ) : (
-            <div className="rounded-2xl border-2 border-red-500/50 bg-gradient-to-br from-red-500/15 to-rose-500/8 px-4 py-3.5 space-y-2.5 shadow-sm shadow-red-500/15">
+            <div
+              className="rounded-2xl px-4 py-3.5 space-y-2.5"
+              style={{
+                background: "linear-gradient(135deg, rgba(239,68,68,0.13) 0%, rgba(225,29,72,0.07) 100%)",
+                border: "2px solid rgba(239,68,68,0.5)",
+                boxShadow: "0 2px 10px rgba(239,68,68,0.15)",
+              }}
+            >
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-red-500/20 border border-red-500/40 flex items-center justify-center shrink-0">
+                <div
+                  className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+                  style={{ background: "rgba(239,68,68,0.18)", border: "1px solid rgba(239,68,68,0.4)" }}
+                >
                   <span className="text-sm">🔒</span>
                 </div>
                 <div>
-                  <p className="text-xs font-black text-red-600 dark:text-red-400 leading-tight">انتهت النسخة التجريبية</p>
-                  <p className="text-xs text-red-500/70 dark:text-red-400/55 leading-tight">استعملت كل الـ {TRIAL_MAX} تصحيحات المجانية</p>
+                  <p className="text-xs font-black leading-tight" style={{ color: "#dc2626" }}>انتهت النسخة التجريبية</p>
+                  <p className="text-xs leading-tight" style={{ color: "rgba(220,38,38,0.70)" }}>استعملت كل الـ {TRIAL_MAX} تصحيحات المجانية</p>
                 </div>
               </div>
               <div className="flex gap-1.5">
                 {Array.from({ length: TRIAL_MAX }).map((_, i) => (
-                  <div key={i} className="flex-1 h-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]" />
+                  <div
+                    key={i}
+                    className="flex-1 h-2.5 rounded-full"
+                    style={{ background: "#ef4444", boxShadow: "0 0 6px rgba(239,68,68,0.55)" }}
+                  />
                 ))}
               </div>
               <button
                 onClick={() => setLocation("/login")}
-                className="w-full text-xs font-black bg-red-500 hover:bg-red-600 active:bg-red-700 text-white rounded-xl py-2 transition-all duration-150 shadow-md shadow-red-500/30 hover:shadow-red-500/50 hover:-translate-y-px"
+                className="w-full text-xs font-black text-white rounded-xl py-2 transition-all duration-150 hover:-translate-y-px"
+                style={{
+                  background: "#dc2626",
+                  boxShadow: "0 3px 10px rgba(220,38,38,0.35)",
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = "#b91c1c")}
+                onMouseLeave={e => (e.currentTarget.style.background = "#dc2626")}
               >
                 🔓 فعّل حسابك للاستمرار
               </button>
