@@ -157,7 +157,7 @@ ${notes ? `ملاحظة الطالب: ${notes}` : ""}
 
       const genai = new GoogleGenerativeAI(apiKey);
       const model = genai.getGenerativeModel({
-        model: "gemini-2.5-flash-preview-04-17",
+        model: "gemini-2.0-flash",
         systemInstruction: SYSTEM_PROMPT,
       });
 
