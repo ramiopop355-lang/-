@@ -21,6 +21,13 @@ function userKey(username: string) {
   return `user:${username.toLowerCase().trim()}`;
 }
 
+async function getUser(username: string): Promise<User | null> {
+  const result = await db.get(userKey(username));
+  if (!result.ok || !result.value) return null;
+  const raw = result.value;
+  return typeof raw === "string" ? JSON.parse(raw) : raw as User;
+}
+
 router.post("/auth/register", async (req, res) => {
   try {
     const { username, phone, password } = req.body as {
@@ -46,7 +53,7 @@ router.post("/auth/register", async (req, res) => {
       return res.status(400).json({ error: "رقم الهاتف غير صالح (9 إلى 10 أرقام)" });
     }
 
-    const existing = await db.get(userKey(cleanUsername));
+    const existing = await getUser(cleanUsername);
     if (existing) {
       return res.status(409).json({ error: "اسم المستخدم هذا مأخوذ، جرب اسماً آخر" });
     }
@@ -91,12 +98,10 @@ router.post("/auth/login", async (req, res) => {
       return res.status(400).json({ error: "أدخل اسم المستخدم وكلمة السر" });
     }
 
-    const raw = await db.get(userKey(username));
-    if (!raw) {
+    const user = await getUser(username);
+    if (!user) {
       return res.status(401).json({ error: "اسم المستخدم أو كلمة السر غير صحيحة" });
     }
-
-    const user: User = typeof raw === "string" ? JSON.parse(raw) : raw;
 
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
