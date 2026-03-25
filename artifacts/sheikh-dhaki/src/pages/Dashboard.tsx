@@ -390,17 +390,17 @@ export default function Dashboard() {
             <button
               onClick={handleSubmit}
               disabled={isPending || !canSubmit}
-              className="w-full bg-gradient-to-l from-yellow-400 to-amber-500 text-gray-900 font-black text-base rounded-xl py-3.5 px-5 shadow-lg shadow-amber-400/40 hover:shadow-xl hover:shadow-amber-400/60 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-l from-gray-900 via-slate-800 to-gray-900 font-black text-base rounded-xl py-3.5 px-5 border border-yellow-400/40 shadow-lg shadow-yellow-400/20 hover:shadow-xl hover:shadow-yellow-400/40 hover:border-yellow-300/60 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
             >
               {isPending ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-gray-800 border-t-transparent rounded-full animate-spin" />
-                  <span>الشيخ يقيّم...</span>
+                  <div className="w-4 h-4 border-2 border-yellow-300 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-yellow-200">جاري التصحيح...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4" />
-                  <span>قيّم محاولتي</span>
+                  <Sparkles className="w-4 h-4 text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.8)]" />
+                  <span className="text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.7)]">قيّم محاولتي</span>
                 </>
               )}
             </button>
