@@ -386,17 +386,17 @@ export default function Dashboard() {
             <button
               onClick={handleSubmit}
               disabled={isPending || !canSubmit}
-              className="w-full bg-gradient-to-l from-primary to-accent text-primary-foreground font-black text-sm rounded-xl py-3.5 px-5 shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/35 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
+              className="w-full bg-gradient-to-l from-yellow-400 to-amber-500 text-gray-900 font-black text-base rounded-xl py-3.5 px-5 shadow-lg shadow-amber-400/40 hover:shadow-xl hover:shadow-amber-400/60 hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center gap-2"
             >
               {isPending ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  الشيخ يقيّم...
+                  <div className="w-4 h-4 border-2 border-gray-800 border-t-transparent rounded-full animate-spin" />
+                  <span>الشيخ يقيّم...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-4 h-4 text-yellow-300" />
-                  <span className="text-yellow-300 text-base font-black tracking-wide">قيّم محاولتي</span>
+                  <Sparkles className="w-4 h-4" />
+                  <span>قيّم محاولتي</span>
                 </>
               )}
             </button>
