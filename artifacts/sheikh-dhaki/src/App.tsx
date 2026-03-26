@@ -3,16 +3,22 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useEffect, useState, lazy, Suspense } from "react";
 
-import NotFound from "@/pages/not-found";
-import Login from "@/pages/Login";
-import Dashboard from "@/pages/Dashboard";
-import Privacy from "@/pages/Privacy";
-import Offline from "@/pages/Offline";
+const NotFound = lazy(() => import("@/pages/not-found"));
+const Login = lazy(() => import("@/pages/Login"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const Privacy = lazy(() => import("@/pages/Privacy"));
+const Offline = lazy(() => import("@/pages/Offline"));
 
 const queryClient = new QueryClient({
-  defaultOptions: { queries: { refetchOnWindowFocus: false, retry: 1 } },
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+      staleTime: 5 * 60 * 1000,
+    },
+  },
 });
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -25,14 +31,16 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
 
 function Router() {
   return (
-    <Switch>
-      <Route path="/login" component={Login} />
-      <Route path="/privacy" component={Privacy} />
-      <Route path="/">
-        <ProtectedRoute component={Dashboard} />
-      </Route>
-      <Route component={NotFound} />
-    </Switch>
+    <Suspense fallback={null}>
+      <Switch>
+        <Route path="/login" component={Login} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/">
+          <ProtectedRoute component={Dashboard} />
+        </Route>
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 
@@ -50,7 +58,7 @@ function App() {
     };
   }, []);
 
-  if (!isOnline) return <Offline />;
+  if (!isOnline) return <Suspense fallback={null}><Offline /></Suspense>;
 
   return (
     <QueryClientProvider client={queryClient}>

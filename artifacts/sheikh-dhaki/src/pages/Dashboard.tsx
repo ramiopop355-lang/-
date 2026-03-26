@@ -189,6 +189,8 @@ export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const boardRef = useRef<HTMLDivElement>(null);
+  const rafRef = useRef<number | null>(null);
+  const pendingTextRef = useRef<string>("");
   const { isDark, toggle } = useDarkModeToggle();
   const daysLeft = Math.max(0, differenceInDays(BAC_DATE, new Date()));
   const trialRemaining = Math.max(0, TRIAL_MAX - trialUsed);
@@ -320,15 +322,26 @@ export default function Dashboard() {
           }
           if (data.content) {
             fullText += data.content as string;
-            setStreamingText(fullText);
-            if (boardRef.current) {
-              boardRef.current.scrollTop = boardRef.current.scrollHeight;
+            pendingTextRef.current = fullText;
+            if (rafRef.current === null) {
+              rafRef.current = requestAnimationFrame(() => {
+                setStreamingText(pendingTextRef.current);
+                if (boardRef.current) {
+                  boardRef.current.scrollTop = boardRef.current.scrollHeight;
+                }
+                rafRef.current = null;
+              });
             }
           }
           if (data.error) {
             throw new Error(data.error as string);
           }
           if (data.done) {
+            if (rafRef.current !== null) {
+              cancelAnimationFrame(rafRef.current);
+              rafRef.current = null;
+            }
+            setStreamingText(fullText);
             const id = crypto.randomUUID();
             setHistory(prev => [{
               id,
