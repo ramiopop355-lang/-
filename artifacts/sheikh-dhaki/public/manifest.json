@@ -1,0 +1,35 @@
+{
+  "name": "سِيغْمَا — مصحح رياضيات البكالوريا",
+  "short_name": "سِيغْمَا Σ",
+  "description": "مصحح رياضيات البكالوريا الجزائرية بالذكاء الاصطناعي",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0f0f1a",
+  "theme_color": "#6366f1",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["education", "productivity"],
+  "screenshots": [
+    {
+      "src": "/opengraph.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "label": "سِيغْمَا — مصحح البكالوريا"
+    }
+  ]
+}
