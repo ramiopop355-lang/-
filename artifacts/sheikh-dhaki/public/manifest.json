@@ -68,6 +68,8 @@
     "client_mode": ["focus-existing", "auto"]
   },
 
+  "privacy_policy_url": "https://sigmaaidzbac.replit.app/privacy",
+
   "share_target": {
     "action": "/",
     "method": "GET",
