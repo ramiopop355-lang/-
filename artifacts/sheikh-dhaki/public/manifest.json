@@ -28,7 +28,13 @@
       "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "/favicon.svg",
@@ -54,7 +60,7 @@
       "short_name": "تصحيح",
       "description": "ابدأ تمريناً جديداً للتصحيح",
       "url": "/",
-      "icons": [{ "src": "/favicon.png", "sizes": "256x256" }]
+      "icons": [{ "src": "/icon-512.png", "sizes": "512x512" }]
     }
   ],
 
