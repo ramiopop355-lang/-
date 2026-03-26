@@ -21,17 +21,17 @@ router.get("/api/push/vapid-public-key", (_req, res) => {
 });
 
 // حفظ اشتراك الإشعارات
-router.post("/api/push/subscribe", async (req, res) => {
+router.post("/api/push/subscribe", async (req, res): Promise<void> => {
   const { username, subscription } = req.body as { username: string; subscription: webpush.PushSubscription };
-  if (!username || !subscription) return res.status(400).json({ error: "missing fields" });
+  if (!username || !subscription) { res.status(400).json({ error: "missing fields" }); return; }
   await db.set(subKey(username), JSON.stringify(subscription));
   res.json({ ok: true });
 });
 
 // إلغاء الاشتراك
-router.delete("/api/push/subscribe", async (req, res) => {
+router.delete("/api/push/subscribe", async (req, res): Promise<void> => {
   const { username } = req.body as { username: string };
-  if (!username) return res.status(400).json({ error: "missing username" });
+  if (!username) { res.status(400).json({ error: "missing username" }); return; }
   await db.delete(subKey(username));
   res.json({ ok: true });
 });
