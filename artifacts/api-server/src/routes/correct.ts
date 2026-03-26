@@ -4,12 +4,22 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// ── نظام تدوير مفاتيح Gemini ──────────────────────────────────────
-function loadApiKeys(): string[] {
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("timeout")), ms)
+    ),
+  ]);
+}
+
+// ── نظام أولوية المفاتيح: المدفوع أولاً، ثم المجانية ──────────────
+function loadPaidKey(): string | null {
+  return process.env["GEMINI_API_KEY"] ?? null;
+}
+
+function loadFreeKeys(): string[] {
   const keys: string[] = [];
-  // المفتاح الأساسي
-  if (process.env["GEMINI_API_KEY"]) keys.push(process.env["GEMINI_API_KEY"]);
-  // مفاتيح إضافية: GEMINI_API_KEY_2, GEMINI_API_KEY_3, ...
   for (let i = 2; i <= 10; i++) {
     const k = process.env[`GEMINI_API_KEY_${i}`];
     if (k) keys.push(k);
@@ -17,14 +27,20 @@ function loadApiKeys(): string[] {
   return keys;
 }
 
-const suspendedKeys = new Set<string>();
-let currentKeyIndex = 0;
+const disabledKeys = new Set<string>();
+let freeKeyIndex = 0;
 
-function getNextKey(keys: string[]): string | null {
-  const active = keys.filter((k) => !suspendedKeys.has(k));
+// إعادة تفعيل المفاتيح المجانية كل 60 دقيقة (الحصة اليومية تتجدد)
+setInterval(() => {
+  disabledKeys.clear();
+  freeKeyIndex = 0;
+}, 60 * 60 * 1000).unref();
+
+function getNextFreeKey(freeKeys: string[]): string | null {
+  const active = freeKeys.filter((k) => !disabledKeys.has(k));
   if (active.length === 0) return null;
-  const key = active[currentKeyIndex % active.length];
-  currentKeyIndex = (currentKeyIndex + 1) % active.length;
+  const key = active[freeKeyIndex % active.length];
+  freeKeyIndex = (freeKeyIndex + 1) % active.length;
   return key;
 }
 
@@ -39,11 +55,20 @@ function isFatalError(err: unknown): boolean {
   );
 }
 
+function isExhaustedError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  return (
+    err.message.includes("429") ||
+    err.message.toLowerCase().includes("quota") ||
+    err.message.toLowerCase().includes("rate limit") ||
+    err.message.toLowerCase().includes("resource_exhausted")
+  );
+}
+
 function isRetryableError(err: unknown): boolean {
   if (!(err instanceof Error)) return false;
   return (
     err.message.includes("503") ||
-    err.message.includes("429") ||
     err.message.includes("500") ||
     err.message.toLowerCase().includes("overloaded") ||
     err.message.toLowerCase().includes("unavailable") ||
@@ -55,34 +80,60 @@ function isRetryableError(err: unknown): boolean {
 async function callWithKeyRotation<T>(
   fn: (apiKey: string) => Promise<T>
 ): Promise<T> {
-  const keys = loadApiKeys();
-  if (keys.length === 0) throw new Error("لا يوجد مفتاح Gemini API مضبوط");
+  const paidKey = loadPaidKey();
+  const freeKeys = loadFreeKeys();
+  const allKeys = [...(paidKey ? [paidKey] : []), ...freeKeys];
+  if (allKeys.length === 0) throw new Error("لا يوجد مفتاح Gemini API مضبوط");
 
-  const tried = new Set<string>();
   let lastErr: unknown;
 
-  while (true) {
-    const key = getNextKey(keys);
-    if (!key || tried.has(key)) break;
-    tried.add(key);
-
-    // محاولتان لكل مفتاح مع backoff
+  // 1️⃣ جرّب المفتاح المدفوع أولاً (ما لم يكن معطّلاً)
+  if (paidKey && !disabledKeys.has(paidKey)) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
-        const result = await fn(key);
-        return result;
+        return await fn(paidKey);
       } catch (err: unknown) {
         lastErr = err;
         if (isFatalError(err)) {
-          console.warn(`Key ending ...${key.slice(-6)} suspended/invalid — skipping.`);
-          suspendedKeys.add(key);
-          break; // جرّب المفتاح التالي
+          console.warn(`[PAID] Key suspended — switching to free keys.`);
+          disabledKeys.add(paidKey);
+          break;
+        }
+        if (isExhaustedError(err)) {
+          console.warn(`[PAID] Quota exhausted — switching to free keys.`);
+          break; // لا تعطّله، فقط انتقل للمجانية الآن
         }
         if (isRetryableError(err) && attempt < 2) {
           await sleep(1500);
           continue;
         }
-        break; // خطأ غير قابل للتكرار
+        break;
+      }
+    }
+  }
+
+  // 2️⃣ انتقل للمفاتيح المجانية بالتناوب
+  const triedFree = new Set<string>();
+  while (true) {
+    const key = getNextFreeKey(freeKeys);
+    if (!key || triedFree.has(key)) break;
+    triedFree.add(key);
+
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        return await fn(key);
+      } catch (err: unknown) {
+        lastErr = err;
+        if (isFatalError(err)) {
+          console.warn(`[FREE] Key ending ...${key.slice(-6)} suspended — skipping.`);
+          disabledKeys.add(key);
+          break;
+        }
+        if (isRetryableError(err) && attempt < 2) {
+          await sleep(1500);
+          continue;
+        }
+        break;
       }
     }
   }
@@ -178,7 +229,7 @@ ${notes ? `ملاحظة الطالب: ${notes}` : ""}
 
 قيّم محاولة الطالب وفق الهيكل البيداغوجي الإلزامي ومنهاج البكالوريا الجزائرية 2026.`;
 
-      const result = await callWithKeyRotation((apiKey) => {
+      const result = await withTimeout(callWithKeyRotation((apiKey) => {
         const genai = new GoogleGenerativeAI(apiKey);
         const model = genai.getGenerativeModel({
           model: "gemini-2.5-flash",
@@ -195,7 +246,7 @@ ${notes ? `ملاحظة الطالب: ${notes}` : ""}
           { inlineData: { data: attemptBase64, mimeType: attemptMime } },
           userMessage,
         ]);
-      });
+      }), 90_000);
 
       for await (const chunk of result.stream) {
         const text = chunk.text();

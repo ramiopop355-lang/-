@@ -24,3 +24,10 @@ expertMode = true
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 20000
+
+[userenv]
+
+[userenv.shared]
+VAPID_PUBLIC_KEY = "BF0u9lovvOgfLgoM9Elz5B_REXE3g9mJKlFzJnoDk0XTo4_xJfGBmL8TB_UWUSP5PJRwhDucXR2fQcxe50gn1kQ"
+VAPID_PRIVATE_KEY = "CcjPiwXAkyqc06pPKW0fRpjcnGrSu8ebYImc6f5pGpY"
+VAPID_EMAIL = "mailto:sigma@bac.dz"
