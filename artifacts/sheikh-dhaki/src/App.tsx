@@ -3,8 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
-import { useEffect, useState, lazy, Suspense, useCallback } from "react";
-import SplashScreen from "@/components/SplashScreen";
+import { useEffect, useState, lazy, Suspense } from "react";
 
 const NotFound = lazy(() => import("@/pages/not-found"));
 const Login = lazy(() => import("@/pages/Login"));
@@ -47,13 +46,6 @@ function Router() {
 
 function App() {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [showSplash, setShowSplash] = useState(
-    () => !sessionStorage.getItem("sigma_splash_done")
-  );
-  const handleSplashDone = useCallback(() => {
-    sessionStorage.setItem("sigma_splash_done", "1");
-    setShowSplash(false);
-  }, []);
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -78,7 +70,6 @@ function App() {
           <Toaster />
         </AuthProvider>
       </TooltipProvider>
-      {showSplash && <SplashScreen onDone={handleSplashDone} />}
     </QueryClientProvider>
   );
 }
