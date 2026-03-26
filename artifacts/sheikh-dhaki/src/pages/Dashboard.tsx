@@ -312,44 +312,50 @@ export default function Dashboard() {
 
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
+          let data: Record<string, unknown>;
           try {
-            const data = JSON.parse(line.slice(6));
-            if (data.content) {
-              fullText += data.content;
-              setStreamingText(fullText);
-              if (boardRef.current) {
-                boardRef.current.scrollTop = boardRef.current.scrollHeight;
-              }
+            data = JSON.parse(line.slice(6));
+          } catch {
+            continue;
+          }
+          if (data.content) {
+            fullText += data.content as string;
+            setStreamingText(fullText);
+            if (boardRef.current) {
+              boardRef.current.scrollTop = boardRef.current.scrollHeight;
             }
-            if (data.done) {
-              const id = crypto.randomUUID();
-              setHistory(prev => [{
-                id,
-                evaluation: fullText,
-                date: new Date(),
-                shoba: selectedShoba,
-                exercisePreview: savedExercisePreview ?? undefined,
-                attemptPreview: savedAttemptPreview ?? undefined,
-              }, ...prev]);
-              setStreamingText("");
-              clearExercise();
-              clearAttempt();
-              setNotes("");
+          }
+          if (data.error) {
+            throw new Error(data.error as string);
+          }
+          if (data.done) {
+            const id = crypto.randomUUID();
+            setHistory(prev => [{
+              id,
+              evaluation: fullText,
+              date: new Date(),
+              shoba: selectedShoba,
+              exercisePreview: savedExercisePreview ?? undefined,
+              attemptPreview: savedAttemptPreview ?? undefined,
+            }, ...prev]);
+            setStreamingText("");
+            clearExercise();
+            clearAttempt();
+            setNotes("");
+            if (!isActivated) {
               const newUsed = trialUsed + 1;
               setTrialUsed(newUsed);
               localStorage.setItem(TRIAL_KEY, String(newUsed));
               const left = TRIAL_MAX - newUsed;
               toast({
-                title: "اكتمل التصحيح!",
+                title: "✅ اكتمل التصحيح!",
                 description: left > 0
                   ? `باقي لك ${left} استخدام${left === 1 ? "" : "ات"} تجريبية.`
                   : "انتهت النسخة التجريبية — فعّل حسابك للاستمرار.",
               });
+            } else {
+              toast({ title: "✅ اكتمل التصحيح!", description: "تصحيحات غير محدودة — استمر!" });
             }
-            if (data.error) {
-              throw new Error(data.error);
-            }
-          } catch {
           }
         }
       }
