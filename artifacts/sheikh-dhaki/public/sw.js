@@ -1,4 +1,4 @@
-const CACHE = "sigma-v1";
+const CACHE = "sigma-v2";
 const STATIC = [
   "/",
   "/index.html",
