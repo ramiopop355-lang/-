@@ -4,17 +4,9 @@ export default function SplashScreen({ onDone }: { onDone: () => void }) {
   const [out, setOut] = useState(false);
 
   useEffect(() => {
-    const audio = new Audio(`${import.meta.env.BASE_URL}splash.mp3`);
-    audio.volume = 0.8;
-    audio.play().catch(() => {});
-
     const t1 = setTimeout(() => setOut(true), 1600);
     const t2 = setTimeout(onDone, 2000);
-    return () => {
-      audio.pause();
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [onDone]);
 
   return (
