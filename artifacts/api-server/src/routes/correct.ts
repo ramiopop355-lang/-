@@ -27,17 +27,37 @@ function loadFreeKeys(): string[] {
   return keys;
 }
 
-const disabledKeys = new Set<string>();
+// ── نظام Cooldown الذكي ──────────────────────────────────────────
+// suspended = معطّل نهائياً (403/401)
+// cooldownUntil = معطّل مؤقتاً حتى وقت معين
+const suspendedKeys  = new Set<string>();
+const cooldownUntil  = new Map<string, number>();
 let freeKeyIndex = 0;
 
-// إعادة تفعيل المفاتيح المجانية كل 60 دقيقة (الحصة اليومية تتجدد)
+const RPM_COOLDOWN_MS   = 65_000;   // 65 ثانية عند تجاوز حد الدقيقة
+const DAILY_COOLDOWN_MS = 60 * 60 * 1000; // ساعة عند نفاد الحصة اليومية
+
+function isKeyAvailable(key: string): boolean {
+  if (suspendedKeys.has(key)) return false;
+  const until = cooldownUntil.get(key) ?? 0;
+  if (Date.now() < until) return false;
+  return true;
+}
+
+function setCooldown(key: string, ms: number): void {
+  cooldownUntil.set(key, Date.now() + ms);
+}
+
+// تنظيف الـ cooldown المنتهية كل 5 دقائق
 setInterval(() => {
-  disabledKeys.clear();
-  freeKeyIndex = 0;
-}, 60 * 60 * 1000).unref();
+  const now = Date.now();
+  for (const [key, until] of cooldownUntil) {
+    if (now >= until) cooldownUntil.delete(key);
+  }
+}, 5 * 60 * 1000).unref();
 
 function getNextFreeKey(freeKeys: string[]): string | null {
-  const active = freeKeys.filter((k) => !disabledKeys.has(k));
+  const active = freeKeys.filter(isKeyAvailable);
   if (active.length === 0) return null;
   const key = active[freeKeyIndex % active.length];
   freeKeyIndex = (freeKeyIndex + 1) % active.length;
@@ -87,21 +107,22 @@ async function callWithKeyRotation<T>(
 
   let lastErr: unknown;
 
-  // 1️⃣ جرّب المفتاح المدفوع أولاً (ما لم يكن معطّلاً)
-  if (paidKey && !disabledKeys.has(paidKey)) {
+  // 1️⃣ جرّب المفتاح المدفوع أولاً
+  if (paidKey && isKeyAvailable(paidKey)) {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {
         return await fn(paidKey);
       } catch (err: unknown) {
         lastErr = err;
         if (isFatalError(err)) {
-          console.warn(`[PAID] Key suspended — switching to free keys.`);
-          disabledKeys.add(paidKey);
+          console.warn(`[PAID] Key suspended permanently.`);
+          suspendedKeys.add(paidKey);
           break;
         }
         if (isExhaustedError(err)) {
-          console.warn(`[PAID] Quota exhausted — switching to free keys.`);
-          break; // لا تعطّله، فقط انتقل للمجانية الآن
+          console.warn(`[PAID] Rate limited — cooldown ${RPM_COOLDOWN_MS / 1000}s.`);
+          setCooldown(paidKey, RPM_COOLDOWN_MS);
+          break;
         }
         if (isRetryableError(err) && attempt < 2) {
           await sleep(1500);
@@ -125,8 +146,17 @@ async function callWithKeyRotation<T>(
       } catch (err: unknown) {
         lastErr = err;
         if (isFatalError(err)) {
-          console.warn(`[FREE] Key ending ...${key.slice(-6)} suspended — skipping.`);
-          disabledKeys.add(key);
+          console.warn(`[FREE] Key ...${key.slice(-6)} suspended permanently.`);
+          suspendedKeys.add(key);
+          break;
+        }
+        if (isExhaustedError(err)) {
+          const isDaily = (err instanceof Error) &&
+            (err.message.toLowerCase().includes("quota") ||
+             err.message.toLowerCase().includes("resource_exhausted"));
+          const cooldown = isDaily ? DAILY_COOLDOWN_MS : RPM_COOLDOWN_MS;
+          console.warn(`[FREE] Key ...${key.slice(-6)} rate limited — cooldown ${cooldown / 1000}s.`);
+          setCooldown(key, cooldown);
           break;
         }
         if (isRetryableError(err) && attempt < 2) {
