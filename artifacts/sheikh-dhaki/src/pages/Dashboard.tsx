@@ -85,6 +85,67 @@ const mdComponents: Components = {
   },
 };
 
+// ── آية اليوم + عداد الباك ─────────────────────────────────────────
+const QURAN_VERSES = [
+  { text: "وَقُل رَّبِّ زِدْنِي عِلْمًا",                                                                      ref: "سورة طه — ١١٤"         },
+  { text: "إِنَّ مَعَ الْعُسْرِ يُسْرًا",                                                                       ref: "سورة الشرح — ٦"         },
+  { text: "يَرْفَعِ اللَّهُ الَّذِينَ آمَنُوا مِنكُمْ وَالَّذِينَ أُوتُوا الْعِلْمَ دَرَجَاتٍ",              ref: "سورة المجادلة — ١١"     },
+  { text: "وَمَن يَتَوَكَّلْ عَلَى اللَّهِ فَهُوَ حَسْبُهُ",                                                   ref: "سورة الطلاق — ٣"        },
+  { text: "وَبَشِّرِ الصَّابِرِينَ",                                                                            ref: "سورة البقرة — ١٥٥"      },
+  { text: "إِنَّ اللَّهَ لَا يُضِيعُ أَجْرَ الْمُحْسِنِينَ",                                                  ref: "سورة هود — ١١٥"         },
+  { text: "وَاصْبِرْ وَمَا صَبْرُكَ إِلَّا بِاللَّهِ",                                                         ref: "سورة النحل — ١٢٧"       },
+  { text: "وَعَلَّمَكَ مَا لَمْ تَكُن تَعْلَمُ ۚ وَكَانَ فَضْلُ اللَّهِ عَلَيْكَ عَظِيمًا",                 ref: "سورة النساء — ١١٣"      },
+  { text: "وَاللَّهُ يُحِبُّ الصَّابِرِينَ",                                                                    ref: "سورة آل عمران — ١٤٦"   },
+  { text: "إِنَّ اللَّهَ مَعَ الَّذِينَ اتَّقَوْا وَّالَّذِينَ هُم مُّحْسِنُونَ",                             ref: "سورة النحل — ١٢٨"       },
+  { text: "وَمَن جَاهَدَ فَإِنَّمَا يُجَاهِدُ لِنَفْسِهِ",                                                    ref: "سورة العنكبوت — ٦"      },
+  { text: "وَقَالَ رَبُّكُمُ ادْعُونِي أَسْتَجِبْ لَكُمْ",                                                    ref: "سورة غافر — ٦٠"         },
+  { text: "إِنَّ اللَّهَ لَا يُغَيِّرُ مَا بِقَوْمٍ حَتَّىٰ يُغَيِّرُوا مَا بِأَنفُسِهِمْ",                 ref: "سورة الرعد — ١١"        },
+  { text: "وَمَا تَوْفِيقِي إِلَّا بِاللَّهِ ۚ عَلَيْهِ تَوَكَّلْتُ",                                        ref: "سورة هود — ٨٨"          },
+  { text: "فَإِذَا فَرَغْتَ فَانصَبْ ۝ وَإِلَىٰ رَبِّكَ فَارْغَب",                                           ref: "سورة الشرح — ٧-٨"       },
+  { text: "يَا أَيُّهَا الَّذِينَ آمَنُوا اسْتَعِينُوا بِالصَّبْرِ وَالصَّلَاةِ",                            ref: "سورة البقرة — ١٥٣"      },
+  { text: "وَلَسَوْفَ يُعْطِيكَ رَبُّكَ فَتَرْضَىٰ",                                                          ref: "سورة الضحى — ٥"         },
+  { text: "مَن كَانَ يُرِيدُ حَرْثَ الْآخِرَةِ نَزِدْ لَهُ فِي حَرْثِهِ",                                    ref: "سورة الشورى — ٢٠"       },
+  { text: "فَبِمَا رَحْمَةٍ مِّنَ اللَّهِ لِنتَ لَهُمْ",                                                      ref: "سورة آل عمران — ١٥٩"   },
+  { text: "وَقُلِ اعْمَلُوا فَسَيَرَى اللَّهُ عَمَلَكُمْ وَرَسُولُهُ وَالْمُؤْمِنُونَ",                      ref: "سورة التوبة — ١٠٥"      },
+  { text: "وَلَا تَيْأَسُوا مِن رَّوْحِ اللَّهِ",                                                              ref: "سورة يوسف — ٨٧"         },
+  { text: "رَبَّنَا آتِنَا مِن لَّدُنكَ رَحْمَةً وَهَيِّئْ لَنَا مِنْ أَمْرِنَا رَشَدًا",                   ref: "سورة الكهف — ١٠"        },
+];
+
+function DailyVerse() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 0);
+  const dayOfYear = Math.floor((now.getTime() - start.getTime()) / 86_400_000);
+  const verse = QURAN_VERSES[dayOfYear % QURAN_VERSES.length];
+
+  const bacDate = new Date(2026, 5, 13); // 13 يونيو 2026
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const daysLeft = Math.max(0, Math.ceil((bacDate.getTime() - today.getTime()) / 86_400_000));
+
+  return (
+    <div className="rounded-2xl overflow-hidden mb-5 border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-card shadow-sm">
+      <div className="flex items-stretch divide-x divide-x-reverse divide-primary/10">
+
+        {/* الآية */}
+        <div className="flex-1 px-5 py-4 flex flex-col items-center justify-center gap-1.5 text-center">
+          <p className="text-[0.65rem] font-bold tracking-widest text-primary/50 uppercase">آية اليوم</p>
+          <p className="text-lg leading-loose text-foreground" style={{ fontFamily: "'Amiri', serif", fontWeight: 700 }}>
+            ﴿ {verse.text} ﴾
+          </p>
+          <p className="text-[0.7rem] text-muted-foreground font-medium">— {verse.ref}</p>
+        </div>
+
+        {/* العداد */}
+        <div className="shrink-0 px-5 py-4 flex flex-col items-center justify-center gap-0.5 bg-primary/5 min-w-[90px]">
+          <p className="text-[0.65rem] font-bold tracking-widest text-primary/50 uppercase">الباك في</p>
+          <p className="text-5xl font-black text-primary tabular-nums leading-none">{daysLeft}</p>
+          <p className="text-xs font-bold text-primary/70">يوماً</p>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 // ── تحليل الرد إلى أقسام ───────────────────────────────────────────
 interface AISection { title: string; content: string; }
 
@@ -892,6 +953,8 @@ export default function Dashboard() {
       {/* MAIN CONTENT */}
       <main ref={boardRef} className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-3xl mx-auto">
+          <DailyVerse />
+
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-xl font-black text-foreground">السبورة الإلكترونية</h1>
             {history.length > 0 && (
