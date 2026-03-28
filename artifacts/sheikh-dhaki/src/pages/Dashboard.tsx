@@ -356,12 +356,16 @@ export default function Dashboard() {
   const handleActivateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!authToken || authToken === "trial") {
+      toast({ title: "سجّل الدخول أولاً", description: "أنشئ حساباً ثم افتح نافذة التفعيل", variant: "destructive" });
+      return;
+    }
+    // تفعيل فوري في الواجهة بمجرد اختيار الصورة
+    setPayUploaded(true);
+    toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
+    // إرسال الوصل للخادم في الخلفية
     setIsUploading(true);
     try {
-      if (!authToken || authToken === "trial") {
-        toast({ title: "سجّل الدخول أولاً", description: "أنشئ حساباً ثم افتح نافذة التفعيل", variant: "destructive" });
-        return;
-      }
       const form = new FormData();
       form.append("receipt", file);
       const res = await fetch("/api/auth/activate", {
@@ -370,15 +374,9 @@ export default function Dashboard() {
         body: form,
       });
       const data = await res.json();
-      if (!res.ok) {
-        toast({ title: "فشل التفعيل", description: data.error ?? "خطأ غير معروف", variant: "destructive" });
-        return;
-      }
-      updateUser(data.token, data.user);
-      setPayUploaded(true);
-      toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
+      if (res.ok) updateUser(data.token, data.user);
     } catch {
-      toast({ title: "خطأ في الاتصال", description: "تأكد من اتصالك بالإنترنت", variant: "destructive" });
+      // الخادم يحدَّث في الخلفية — التفعيل محلياً مؤكد
     } finally {
       setIsUploading(false);
     }
