@@ -676,7 +676,7 @@ export default function Dashboard() {
                 </div>
                 <div>
                   <p className="text-xs font-black leading-tight" style={{ color: "#dc2626" }}>انتهت النسخة التجريبية</p>
-                  <p className="text-xs leading-tight" style={{ color: "rgba(220,38,38,0.70)" }}>استعملت كل الـ {TRIAL_MAX} تصحيحات المجانية</p>
+                  <p className="text-xs leading-tight" style={{ color: "rgba(220,38,38,0.70)" }}>لقد استنفدت الـ {TRIAL_MAX} تصحيحات المجانية</p>
                 </div>
               </div>
               <div className="flex gap-1.5">
@@ -834,7 +834,9 @@ export default function Dashboard() {
               >
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-xs font-semibold text-primary">Σ سِيغْمَا يقيّم محاولتك...</span>
+                  <span className="text-xs font-semibold text-primary">
+                    Σ سِيغْمَا {solveMode ? "يبني الحل الكامل..." : "يقيّم محاولتك..."}
+                  </span>
                   <span className="inline-flex items-center gap-1 bg-primary/10 text-primary text-xs font-bold px-2.5 py-0.5 rounded-full mr-auto">
                     <Sparkles className="w-3 h-3" />
                     {selectedShoba}
@@ -853,7 +855,9 @@ export default function Dashboard() {
               </div>
               <h3 className="text-base font-bold text-foreground mb-2">السبورة فارغة</h3>
               <p className="text-sm text-muted-foreground max-w-xs">
-                ارفع صورة التمرين وصورة محاولتك وسيقيّم سِيغْمَا إجابتك فوراً
+                {solveMode
+                  ? "ارفع صورة التمرين وسيبني سِيغْمَا الحل الكامل لك فوراً"
+                  : "ارفع صورة التمرين وصورة محاولتك وسيقيّم سِيغْمَا إجابتك فوراً"}
               </p>
             </div>
           ) : (
@@ -1040,7 +1044,7 @@ export default function Dashboard() {
                             )}
                           </label>
                           <button onClick={() => setPayStep(1)} className="w-full text-xs text-muted-foreground hover:text-foreground font-medium transition-colors">
-                            ← رجوع للخطوة السابقة
+                            → رجوع للخطوة السابقة
                           </button>
                         </>
                       )}

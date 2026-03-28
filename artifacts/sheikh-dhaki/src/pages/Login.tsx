@@ -182,7 +182,7 @@ export default function Login() {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!authToken || authToken === "trial") {
-      toast({ title: "سجّل الدخول أولاً", description: "أنشئ حساباً أو ادخل لحسابك ثم افتح نافذة التفعيل", variant: "destructive" });
+      toast({ title: "سجّل الدخول أولاً", description: "أنشئ حساباً أو ادخل إلى حسابك ثم افتح نافذة التفعيل", variant: "destructive" });
       return;
     }
     // تفعيل فوري — تحديث حالة المستخدم في الـ context فوراً
@@ -510,12 +510,12 @@ export default function Login() {
                         </div>
                         <div className="h-px bg-border" />
                         <div className="space-y-1.5">
-                          <span className="text-xs text-muted-foreground">رقم RIP</span>
+                          <span className="text-xs text-muted-foreground">رقم RIP — انقر للنسخ</span>
                           <RIPCopyField rip="00799999002789880450" />
                         </div>
                       </div>
                       <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300/60 rounded-xl px-3 py-2 text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
-                        ادفع <strong>500 دج</strong> واحصل على <strong>النسخة الكاملة</strong> مع تصحيحات غير محدودة ✨
+                        ادفع <strong>500 دج</strong> عبر بريدي موب، ثم ارفع وصل الدفع في الخطوة التالية ✨
                       </div>
                       <button
                         onClick={() => setPayStep(2)}
@@ -567,7 +567,7 @@ export default function Login() {
                             )}
                           </label>
                           <button onClick={() => setPayStep(1)} className="w-full text-xs text-muted-foreground hover:text-foreground font-medium transition-colors">
-                            ← رجوع للخطوة السابقة
+                            → رجوع للخطوة السابقة
                           </button>
                         </>
                       )}
