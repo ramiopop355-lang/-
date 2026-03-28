@@ -1,89 +1,9 @@
 import { Router, type IRouter } from "express";
 import multer from "multer";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { evaluate } from "mathjs";
 import OpenAI from "openai";
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-// ── التحقق الرياضي بـ mathjs ──────────────────────────────────────
-interface ExprPair {
-  student:  string;
-  expected: string;
-  variable: string;
-  context:  string;
-}
-
-interface VerifResult extends ExprPair {
-  equivalent: boolean | null;
-}
-
-function checkEquivalence(expr1: string, expr2: string, variable: string): boolean | null {
-  const testPoints = [1, 2, Math.PI, -1, 0.5, 7, 0.1, 3];
-  try {
-    for (const val of testPoints) {
-      const scope: Record<string, number> = { [variable]: val };
-      const v1 = evaluate(expr1, scope) as number;
-      const v2 = evaluate(expr2, scope) as number;
-      if (typeof v1 !== "number" || typeof v2 !== "number" || !isFinite(v1) || !isFinite(v2)) continue;
-      if (Math.abs(v1 - v2) > 1e-9) return false;
-    }
-    return true;
-  } catch {
-    return null;
-  }
-}
-
-const EXTRACT_PROMPT = `Look at both images (exercise + student attempt).
-Extract up to 5 mathematical expression pairs where the student wrote a result that can be verified.
-Return ONLY a valid JSON array — no markdown, no explanation.
-Each item: {"student":"expr","expected":"expr","variable":"x","context":"brief label"}
-Use JavaScript/mathjs syntax: 2*x+2, (x+1)^2, sqrt(x), log(x), e^x → exp(x).
-If the correct expected answer cannot be determined from the exercise, set expected to null.
-If no verifiable pairs exist, return [].`;
-
-async function preAnalyze(
-  exerciseBase64: string, exerciseMime: string,
-  attemptBase64: string,  attemptMime: string,
-  apiKey: string
-): Promise<string> {
-  try {
-    const genai = new GoogleGenerativeAI(apiKey);
-    const model = genai.getGenerativeModel({
-      model: "gemini-2.0-flash",
-      generationConfig: { temperature: 0, maxOutputTokens: 512, responseMimeType: "application/json" },
-    });
-    const raw = await withTimeout(
-      model.generateContent([
-        { inlineData: { data: exerciseBase64, mimeType: exerciseMime } },
-        { inlineData: { data: attemptBase64,  mimeType: attemptMime  } },
-        EXTRACT_PROMPT,
-      ]),
-      5_000
-    );
-    const pairs = JSON.parse(raw.response.text()) as ExprPair[];
-    if (!Array.isArray(pairs) || pairs.length === 0) return "";
-
-    const results: VerifResult[] = pairs
-      .filter((p) => p.student && p.expected)
-      .map((p) => ({
-        ...p,
-        equivalent: checkEquivalence(p.student, p.expected, p.variable || "x"),
-      }));
-
-    if (results.length === 0) return "";
-
-    const lines = results.map((r) => {
-      const mark = r.equivalent === true ? "✅ مكافئ رياضياً" :
-                   r.equivalent === false ? "❌ غير مكافئ" : "⚠️ لم يُتحقق";
-      return `- ${r.context}: إجابة الطالب \`${r.student}\` مقابل الصحيح \`${r.expected}\` → ${mark}`;
-    });
-
-    return `\n\n**[تحقق mathjs تلقائي]:**\n${lines.join("\n")}`;
-  } catch {
-    return "";
-  }
-}
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   return Promise.race([
@@ -280,7 +200,7 @@ async function callOpenRouterStream(
       client.chat.completions.create({
         model: "google/gemini-2.5-flash",
         temperature: 0.2,
-        max_tokens: 4096,
+        max_tokens: 1800,
         stream: true,
         messages: [
           { role: "system", content: systemPrompt },
@@ -313,6 +233,8 @@ const upload = multer({
 
 const SYSTEM_PROMPT = `أنت أستاذ رياضيات جزائري خبير ومتخصص في تصحيح تمارين بكالوريا الجزائر.
 هدفك الوحيد: تصحيح إجابة التلميذ بدقة رياضية تامة، مع تحديد الأخطاء بوضوح — لا مجرد إعطاء الحل.
+
+🎯 قاعدة الإيجاز (إلزامية): كن مقتضباً في كل قسم. لا تشرح ما هو واضح. لا تكرر. كل خطوة في سطر أو سطرين. لا تكتب مقدمات ولا خواتيم إضافية.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📸 قراءة الصور
@@ -427,24 +349,10 @@ const SYSTEM_PROMPT = `أنت أستاذ رياضيات جزائري خبير و
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 عندما يطلب الطالب الحل الكامل مباشرة (بدون محاولة)، استخدم هذا الهيكل الإلزامي:
 
-📌 قراءة التمرين:
-[لخّص ما يطلبه التمرين في جملة أو جملتين]
+📌 التمرين: [جملة واحدة تلخص المطلوب]
 
-📌 الحل المنهجي الكامل:
-[حل مفصل ومنظم، خطوة بخطوة، بكل التبريرات الرياضية المطلوبة في البكالوريا]
-القواعد:
-  - ابدأ بتحديد المُعطيات والمطلوب
-  - سمِّ كل خطوة بوضوح (مجال التعريف، المشتق، جدول التغيرات، إلخ)
-  - بيّن جميع التفاصيل الحسابية — لا تتجاوز خطوة واحدة
-  - استخدم جداول الإشارة وجداول التغيرات بتنسيق Markdown (انظر قسم "تنسيق جداول الإشارة والتغيرات")
-
-  - اكتب كل تعبير رياضي بـ LaTeX
-
-📌 التحقق من النتيجة:
-[تحقق بالتعويض أو بطريقة مناسبة]
-
-📌 نصيحة للامتحان:
-[نقطة مهمة حول هذا النوع من التمارين في البكالوريا]
+📌 الحل:
+[حل منهجي مقتضب خطوة بخطوة — سمِّ كل خطوة (مجال التعريف، المشتق، الجدول...) — اكتب كل تعبير بـ LaTeX — استخدم جداول Markdown إذا كانت ضرورية — لا تشرح ما هو بديهي]
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 📋 هيكل رد التصحيح (عند وجود محاولة طالب)
@@ -452,29 +360,13 @@ const SYSTEM_PROMPT = `أنت أستاذ رياضيات جزائري خبير و
 
 📌 الحكم: [✔️ صحيح / ⚠️ ناقص / ❌ خطأ]
 
-📌 أين أخطأ التلميذ:
-[اذكر الخطأ بدقة مع تحديد الخطوة — أو اكتب: لا يوجد]
+📌 الملاحظة: [الخطأ بجملة واحدة أو جملتين — أو: لا يوجد خطأ]
 
-📌 التصحيح:
-[الخطوات الضرورية فقط، مختصرة وواضحة، مع LaTeX]
-- إذا احتاج التصحيح لجدول إشارة أو تغيرات، استخدم تنسيق Markdown المذكور في قسم "تنسيق جداول الإشارة والتغيرات"
-- اكتب كل تعبير رياضي بـ LaTeX
+📌 التصحيح والحل:
+[الحل الصحيح خطوة بخطوة، مقتضب، بـ LaTeX — استخدم جداول Markdown إذا كانت ضرورية]
 
-📌 الحل المختصر (كما في الباك):
-[حل منظم وقصير بخطوات واضحة، يتضمن الجداول إذا كانت ضرورية]
+📌 نصيحة: [جملة واحدة فقط]
 
-📌 نصيحة:
-[جملة قصيرة واحدة تفيد التلميذ في الامتحان]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-مثال على الشكل المطلوب:
-
-📌 الحكم: ✔️ صحيح
-📌 أين أخطأ التلميذ: لا يوجد
-📌 التصحيح: التعبير $2(x+1)$ مكافئ لـ $2x+2$ — التحقق بالنشر: $2(x+1)=2x+2$ ✔️
-📌 الحل المختصر: $x = 3$ أو $x = -1$
-📌 نصيحة: اكتب دائماً خطوة التحقق لتضمن النقطة الكاملة.
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 *سِيغْمَا Σ — بياناتك مشفرة ومحمية.*`;
 
 router.post(
@@ -512,27 +404,17 @@ router.post(
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.flushHeaders();
 
-      // ── التحقق الرياضي بـ mathjs بشكل متوازٍ (max 3 ثوانٍ) ──
-      const anyKey = loadPaidKey() ?? loadFreeKeys()[0] ?? "";
-      const mathjsVerification = (!isSolveMode && anyKey)
-        ? await Promise.race([
-            preAnalyze(exerciseBase64, exerciseMime, attemptBase64, attemptMime, anyKey).catch(() => ""),
-            sleep(3_000).then(() => ""),
-          ])
-        : "";
-
       const userMessage = isSolveMode
         ? `الشعبة: **${shoba}**
 ${notes ? `ملاحظة الطالب: ${notes}` : ""}
 
 الصورة المرفقة: نص التمرين.
-المطلوب: ابنِ الحل المنهجي الكامل لهذا التمرين خطوة بخطوة وفق منهاج البكالوريا الجزائرية 2026 للشعبة المذكورة، مع كل التبريرات والتفاصيل الحسابية اللازمة. استخدم هيكل "وضع بناء الحل الكامل" الموضح في تعليماتك.`
+المطلوب: حلّ هذا التمرين بالطريقة المقررة في البكالوريا الجزائرية 2026 — خطوة بخطوة بشكل مقتضب وكامل.`
         : `الشعبة: **${shoba}**
 ${notes ? `ملاحظة الطالب: ${notes}` : ""}
 
 الصورة الأولى: نص التمرين.
 الصورة الثانية: محاولة الطالب مكتوبة بخط اليد — اقرأها بدقة تامة حتى لو كان الخط غير واضح، واستنتج أي جزء غامض من السياق الرياضي.
-${mathjsVerification ? `\n**[نتائج التحقق الحسابي التلقائي — استخدمها كمرجع داخلي ثابت]:**${mathjsVerification}\n` : ""}
 قيّم محاولة الطالب وفق الهيكل البيداغوجي الإلزامي ومنهاج البكالوريا الجزائرية 2026.`;
 
       // ── 1️⃣ OpenRouter أولاً (مدفوع — أولوية قصوى) ──
@@ -558,7 +440,7 @@ ${mathjsVerification ? `\n**[نتائج التحقق الحسابي التلقا
             systemInstruction: SYSTEM_PROMPT,
             generationConfig: {
               temperature: 0.2,
-              maxOutputTokens: 4096,
+              maxOutputTokens: 1800,
               // @ts-ignore
               thinkingConfig: { thinkingBudget: 0 },
             },
