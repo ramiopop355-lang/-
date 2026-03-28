@@ -497,25 +497,32 @@ router.post(
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");       // منع nginx من تخزين الـ chunks
       res.setHeader("Access-Control-Allow-Origin", "*");
       res.flushHeaders();
 
-      // ── التحقق الرياضي بـ mathjs بشكل متوازٍ (max 3 ثوانٍ) ──
-      const anyKey = loadPaidKey() ?? loadFreeKeys()[0] ?? "";
-      const mathjsVerification = (!isSolveMode && anyKey)
-        ? await Promise.race([
-            preAnalyze(exerciseBase64, exerciseMime, attemptBase64, attemptMime, anyKey).catch(() => ""),
-            sleep(3_000).then(() => ""),
-          ])
-        : "";
+      // ── Keep-alive ping كل 10 ثوانٍ لمنع انقطاع SSE أثناء مرحلة التفكير ──
+      const keepAlive = setInterval(() => {
+        try { res.write(": ping\n\n"); } catch { /* الاتصال مغلق */ }
+      }, 10_000);
 
-      const userMessage = isSolveMode
-        ? `الشعبة: **${shoba}**
+      try {
+        // ── التحقق الرياضي بـ mathjs بشكل متوازٍ (max 3 ثوانٍ) ──
+        const anyKey = loadPaidKey() ?? loadFreeKeys()[0] ?? "";
+        const mathjsVerification = (!isSolveMode && anyKey)
+          ? await Promise.race([
+              preAnalyze(exerciseBase64, exerciseMime, attemptBase64, attemptMime, anyKey).catch(() => ""),
+              sleep(3_000).then(() => ""),
+            ])
+          : "";
+
+        const userMessage = isSolveMode
+          ? `الشعبة: **${shoba}**
 ${notes ? `ملاحظة الطالب: ${notes}` : ""}
 
 الصورة المرفقة: نص التمرين.
 المطلوب: ابنِ الحل المنهجي الكامل لهذا التمرين خطوة بخطوة وفق منهاج البكالوريا الجزائرية 2026 للشعبة المذكورة، مع كل التبريرات والتفاصيل الحسابية اللازمة. استخدم هيكل "وضع بناء الحل الكامل" الموضح في تعليماتك.`
-        : `الشعبة: **${shoba}**
+          : `الشعبة: **${shoba}**
 ${notes ? `ملاحظة الطالب: ${notes}` : ""}
 
 الصورة الأولى: نص التمرين.
@@ -523,53 +530,58 @@ ${notes ? `ملاحظة الطالب: ${notes}` : ""}
 ${mathjsVerification ? `\n**[نتائج التحقق الحسابي التلقائي — استخدمها كمرجع داخلي ثابت]:**${mathjsVerification}\n` : ""}
 قيّم محاولة الطالب وفق الهيكل البيداغوجي الإلزامي ومنهاج البكالوريا الجزائرية 2026.`;
 
-      // ── 1️⃣ OpenRouter أولاً (مدفوع — أولوية قصوى) ──
-      const orSuccess = await callOpenRouterStream(
-        exerciseBase64, exerciseMime,
-        attemptBase64,  attemptMime,
-        SYSTEM_PROMPT,  userMessage,
-        (text) => res.write(`data: ${JSON.stringify({ content: text })}\n\n`),
-        isSolveMode
-      );
+        // ── 1️⃣ OpenRouter أولاً (مدفوع — أولوية قصوى) ──
+        const orSuccess = await callOpenRouterStream(
+          exerciseBase64, exerciseMime,
+          attemptBase64,  attemptMime,
+          SYSTEM_PROMPT,  userMessage,
+          (text) => res.write(`data: ${JSON.stringify({ content: text })}\n\n`),
+          isSolveMode
+        );
 
-      // ── 2️⃣ احتياطي: Gemini مع دوران المفاتيح ──
-      if (!orSuccess) {
-        console.info("[FALLBACK] استخدام Gemini...");
-        const geminiParts = isSolveMode
-          ? [{ inlineData: { data: exerciseBase64, mimeType: exerciseMime } }, userMessage]
-          : [{ inlineData: { data: exerciseBase64, mimeType: exerciseMime } }, { inlineData: { data: attemptBase64, mimeType: attemptMime } }, userMessage];
+        // ── 2️⃣ احتياطي: Gemini مع دوران المفاتيح ──
+        if (!orSuccess) {
+          console.info("[FALLBACK] استخدام Gemini...");
+          const geminiParts = isSolveMode
+            ? [{ inlineData: { data: exerciseBase64, mimeType: exerciseMime } }, userMessage]
+            : [{ inlineData: { data: exerciseBase64, mimeType: exerciseMime } }, { inlineData: { data: attemptBase64, mimeType: attemptMime } }, userMessage];
 
-        const result = await withTimeout(callWithKeyRotation((apiKey) => {
-          const genai = new GoogleGenerativeAI(apiKey);
-          const model = genai.getGenerativeModel({
-            model: "gemini-2.5-flash",
-            systemInstruction: SYSTEM_PROMPT,
-            generationConfig: {
-              temperature: 1,
-              maxOutputTokens: 8192,
-              // @ts-ignore
-              thinkingConfig: { thinkingBudget: 4096 },
-            },
-          });
-          return model.generateContentStream(geminiParts);
-        }), 90_000);
+          const result = await withTimeout(callWithKeyRotation((apiKey) => {
+            const genai = new GoogleGenerativeAI(apiKey);
+            const model = genai.getGenerativeModel({
+              model: "gemini-2.5-flash",
+              systemInstruction: SYSTEM_PROMPT,
+              generationConfig: {
+                temperature: 1,
+                maxOutputTokens: 8192,
+                // @ts-ignore
+                thinkingConfig: { thinkingBudget: 2048 },
+              },
+            });
+            return model.generateContentStream(geminiParts);
+          }), 150_000);  // 2.5 دقيقة كافية للتفكير + الرد
 
-        for await (const chunk of result.stream) {
-          const text = chunk.text();
-          if (text) res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
+          for await (const chunk of result.stream) {
+            const text = chunk.text();
+            if (text) res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
+          }
         }
-      }
 
-      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
-      res.end();
+        res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+        res.end();
+      } finally {
+        clearInterval(keepAlive);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "خطأ في الخادم";
       console.error("Correct error:", err);
       if (!res.headersSent) {
         res.status(500).json({ error: message });
       } else {
-        res.write(`data: ${JSON.stringify({ error: message })}\n\n`);
-        res.end();
+        try {
+          res.write(`data: ${JSON.stringify({ error: message })}\n\n`);
+          res.end();
+        } catch { /* الاتصال مغلق */ }
       }
     }
   }

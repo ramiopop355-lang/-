@@ -468,13 +468,16 @@ export default function Dashboard() {
 
       const decoder = new TextDecoder();
       let fullText = "";
+      let lineBuffer = "";   // يحتفظ بالسطر الناقص بين الـ chunks
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunk = decoder.decode(value, { stream: true });
-        const lines = chunk.split("\n");
+        // نُضيف الـ chunk للـ buffer ونُقسّم على السطور الكاملة فقط
+        lineBuffer += decoder.decode(value, { stream: true });
+        const lines = lineBuffer.split("\n");
+        lineBuffer = lines.pop() ?? ""; // نُبقي السطر الأخير (قد يكون ناقصاً)
 
         for (const line of lines) {
           if (!line.startsWith("data: ")) continue;
