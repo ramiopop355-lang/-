@@ -122,26 +122,23 @@ function DailyVerse() {
   const daysLeft = Math.max(0, Math.ceil((bacDate.getTime() - today.getTime()) / 86_400_000));
 
   return (
-    <div className="rounded-2xl overflow-hidden mb-5 border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-card shadow-sm">
-      <div className="flex items-stretch divide-x divide-x-reverse divide-primary/10">
+    <div className="rounded-2xl mb-5 border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-card shadow-sm px-4 py-3 flex items-center gap-4">
 
-        {/* الآية */}
-        <div className="flex-1 px-5 py-4 flex flex-col items-center justify-center gap-1.5 text-center">
-          <p className="text-[0.65rem] font-bold tracking-widest text-primary/50 uppercase">آية اليوم</p>
-          <p className="text-lg leading-loose text-foreground" style={{ fontFamily: "'Amiri', serif", fontWeight: 700 }}>
-            ﴿ {verse.text} ﴾
-          </p>
-          <p className="text-[0.7rem] text-muted-foreground font-medium">— {verse.ref}</p>
-        </div>
-
-        {/* العداد */}
-        <div className="shrink-0 px-5 py-4 flex flex-col items-center justify-center gap-0.5 bg-primary/5 min-w-[90px]">
-          <p className="text-[0.65rem] font-bold tracking-widest text-primary/50 uppercase">الباك في</p>
-          <p className="text-5xl font-black text-primary tabular-nums leading-none">{daysLeft}</p>
-          <p className="text-xs font-bold text-primary/70">يوماً</p>
-        </div>
-
+      {/* العداد */}
+      <div className="shrink-0 flex flex-col items-center justify-center bg-primary/8 rounded-xl px-4 py-2 border border-primary/15 min-w-[72px]">
+        <p className="text-[0.6rem] font-bold text-primary/50 leading-none mb-1">الباك في</p>
+        <p className="text-3xl font-black text-primary tabular-nums leading-none">{daysLeft}</p>
+        <p className="text-[0.6rem] font-bold text-primary/60 leading-none mt-0.5">يوماً</p>
       </div>
+
+      {/* الآية */}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm leading-relaxed text-foreground line-clamp-2" style={{ fontFamily: "'Amiri', serif", fontWeight: 700 }}>
+          ﴿ {verse.text} ﴾
+        </p>
+        <p className="text-[0.65rem] text-muted-foreground mt-0.5">{verse.ref}</p>
+      </div>
+
     </div>
   );
 }
