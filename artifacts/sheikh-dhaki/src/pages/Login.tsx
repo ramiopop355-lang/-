@@ -106,7 +106,7 @@ export default function Login() {
   const [regPassword, setRegPassword] = useState("");
   const [regConfirm, setRegConfirm] = useState("");
 
-  const { login, token: authToken, updateUser } = useAuth();
+  const { login, token: authToken, updateUser, user } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { isDark, toggle } = useDarkModeToggle();
@@ -185,10 +185,11 @@ export default function Login() {
       toast({ title: "سجّل الدخول أولاً", description: "أنشئ حساباً أو ادخل لحسابك ثم افتح نافذة التفعيل", variant: "destructive" });
       return;
     }
-    // تفعيل فوري في الواجهة بمجرد اختيار الصورة
+    // تفعيل فوري — تحديث حالة المستخدم في الـ context فوراً
     setUploaded(true);
+    if (user) updateUser(authToken, { ...user, activated: true });
     toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
-    // إرسال الوصل للخادم في الخلفية
+    // إرسال الوصل للخادم في الخلفية وتحديث الـ token الرسمي
     setIsUploading(true);
     try {
       const form = new FormData();
@@ -201,7 +202,7 @@ export default function Login() {
       const data = await res.json();
       if (res.ok) updateUser(data.token, data.user);
     } catch {
-      // الخادم يحدَّث في الخلفية — التفعيل محلياً مؤكد
+      // التفعيل المحلي مؤكد — الخادم سيُزامن عند الدخول التالي
     } finally {
       setIsUploading(false);
     }

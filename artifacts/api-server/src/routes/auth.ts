@@ -32,6 +32,7 @@ interface User {
   createdAt: string;
   activated: boolean;
   devices: DeviceInfo[];
+  receiptUploaded?: { size?: number; mime?: string; at: string };
 }
 
 function userKey(username: string) {
@@ -133,7 +134,6 @@ router.post("/auth/activate", upload.single("receipt"), async (req, res) => {
     const updatedUser: User = {
       ...user,
       activated: true,
-      // @ts-ignore
       receiptUploaded: receiptMeta,
     };
     await db.set(userKey(user.username), JSON.stringify(updatedUser));

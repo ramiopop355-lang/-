@@ -361,10 +361,11 @@ export default function Dashboard() {
       toast({ title: "سجّل الدخول أولاً", description: "أنشئ حساباً ثم افتح نافذة التفعيل", variant: "destructive" });
       return;
     }
-    // تفعيل فوري في الواجهة بمجرد اختيار الصورة
+    // تفعيل فوري — تحديث حالة المستخدم في الـ context فوراً
     setPayUploaded(true);
+    if (user) updateUser(authToken, { ...user, activated: true });
     toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
-    // إرسال الوصل للخادم في الخلفية
+    // إرسال الوصل للخادم في الخلفية وتحديث الـ token الرسمي
     setIsUploading(true);
     try {
       const form = new FormData();
@@ -377,7 +378,7 @@ export default function Dashboard() {
       const data = await res.json();
       if (res.ok) updateUser(data.token, data.user);
     } catch {
-      // الخادم يحدَّث في الخلفية — التفعيل محلياً مؤكد
+      // التفعيل المحلي مؤكد — الخادم سيُزامن عند الدخول التالي
     } finally {
       setIsUploading(false);
     }
