@@ -1,5 +1,5 @@
 import { useEffect, useRef, useMemo } from "react";
-import { evaluate, parse } from "mathjs";
+import { evaluate } from "mathjs";
 
 export interface PlotFunction {
   fn: string;
@@ -31,13 +31,38 @@ function safeEval(fn: string, x: number): number | null {
   }
 }
 
+function cleanJson(raw: string): string {
+  return raw
+    .replace(/[\u2018\u2019]/g, "'")   // curly single quotes
+    .replace(/[\u201C\u201D]/g, '"')   // curly double quotes
+    .replace(/,\s*([}\]])/g, "$1")     // trailing commas
+    .trim();
+}
+
+function cleanFn(fn: string): string {
+  return fn
+    .replace(/ln\s*\(/g, "log(")      // ln(x) → log(x)
+    .replace(/²/g, "^2")              // x² → x^2
+    .replace(/³/g, "^3")              // x³ → x^3
+    .replace(/×/g, "*")               // × → *
+    .replace(/÷/g, "/")               // ÷ → /
+    .replace(/−/g, "-")               // minus sign → hyphen-minus
+    .trim();
+}
+
 function parsePlotSpec(raw: string): PlotSpec | null {
   try {
-    const spec = JSON.parse(raw.trim());
+    const cleaned = cleanJson(raw);
+    const spec = JSON.parse(cleaned);
     if (!spec.functions && spec.fn) {
       spec.functions = [{ fn: spec.fn, label: spec.label, color: spec.color }];
     }
     if (!Array.isArray(spec.functions)) return null;
+    // تنظيف تعبيرات الدوال
+    spec.functions = spec.functions.map((f: PlotFunction) => ({
+      ...f,
+      fn: cleanFn(f.fn ?? ""),
+    }));
     return spec as PlotSpec;
   } catch {
     return null;
@@ -51,14 +76,44 @@ export default function FunctionPlot({ raw }: { raw: string }) {
 
   useEffect(() => {
     if (!spec || !canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const dpr = window.devicePixelRatio || 1;
-    const W = canvas.offsetWidth;
-    const H = canvas.offsetHeight;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
-    const ctx = canvas.getContext("2d")!;
-    ctx.scale(dpr, dpr);
+
+    function draw() {
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const W = canvas.offsetWidth || canvas.parentElement?.offsetWidth || 600;
+      const H = 300;
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      const ctx = canvas.getContext("2d")!;
+      ctx.scale(dpr, dpr);
+      renderPlot(ctx, spec!, W, H, dpr);
+    }
+
+    // defer to after layout
+    const raf = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(raf);
+  }, [spec]);
+
+  if (!spec) {
+    return (
+      <div className="border border-border rounded-xl p-3 text-sm text-muted-foreground font-mono bg-muted overflow-x-auto">
+        {raw}
+      </div>
+    );
+  }
+
+  return (
+    <div className="my-4 rounded-2xl overflow-hidden border border-border shadow-sm bg-card">
+      <canvas
+        ref={canvasRef}
+        style={{ width: "100%", height: 300, display: "block" }}
+      />
+    </div>
+  );
+}
+
+function renderPlot(ctx: CanvasRenderingContext2D, spec: PlotSpec, W: number, H: number, _dpr: number) {
 
     const isDark = document.documentElement.classList.contains("dark");
     const bg = isDark ? "#1e1e2e" : "#ffffff";
@@ -271,25 +326,6 @@ export default function FunctionPlot({ raw }: { raw: string }) {
       ctx.textAlign = "center";
       ctx.fillText(spec.title, W / 2, 18);
     }
-  }, [spec]);
-
-  if (!spec) {
-    return (
-      <div className="border border-border rounded-xl p-3 text-sm text-muted-foreground font-mono bg-muted">
-        {raw}
-      </div>
-    );
-  }
-
-  return (
-    <div className="my-4 rounded-2xl overflow-hidden border border-border shadow-sm bg-card">
-      <canvas
-        ref={canvasRef}
-        className="w-full"
-        style={{ height: 300, display: "block" }}
-      />
-    </div>
-  );
 }
 
 function niceStep(range: number): number {

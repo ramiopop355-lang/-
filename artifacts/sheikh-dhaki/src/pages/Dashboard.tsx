@@ -53,11 +53,24 @@ function useDarkModeToggle() {
 }
 
 const mdComponents: Components = {
+  pre({ children }) {
+    // إذا كانت تحتوي على sigma-plot، نُزيل الـ pre wrapper لأنه يُخرّب الرسم
+    return <div className="my-1">{children}</div>;
+  },
   code({ className, children, ...props }) {
     const lang = /language-(\w+)/.exec(className ?? "")?.[1];
     const raw = String(children ?? "").trim();
     if (lang === "sigma-plot") {
       return <FunctionPlot raw={raw} />;
+    }
+    if (lang) {
+      return (
+        <pre className="bg-muted rounded-xl p-4 overflow-x-auto my-2">
+          <code className={`${className ?? ""} text-foreground text-sm font-mono`} {...props}>
+            {children}
+          </code>
+        </pre>
+      );
     }
     return (
       <code
