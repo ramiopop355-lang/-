@@ -179,26 +179,24 @@ export default function Login() {
   };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
     setIsUploading(true);
     try {
       if (!authToken || authToken === "trial") {
-        toast({
-          title: "سجّل الدخول أولاً",
-          description: "أنشئ حساباً أو ادخل لحسابك ثم افتح نافذة التفعيل",
-          variant: "destructive",
-        });
-        setIsUploading(false);
+        toast({ title: "سجّل الدخول أولاً", description: "أنشئ حساباً أو ادخل لحسابك ثم افتح نافذة التفعيل", variant: "destructive" });
         return;
       }
+      const form = new FormData();
+      form.append("receipt", file);
       const res = await fetch("/api/auth/activate", {
         method: "POST",
         headers: { Authorization: `Bearer ${authToken}` },
+        body: form,
       });
       const data = await res.json();
       if (!res.ok) {
         toast({ title: "فشل التفعيل", description: data.error ?? "خطأ غير معروف", variant: "destructive" });
-        setIsUploading(false);
         return;
       }
       updateUser(data.token, data.user);

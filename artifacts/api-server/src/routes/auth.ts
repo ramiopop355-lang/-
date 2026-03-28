@@ -2,9 +2,18 @@ import { Router, type IRouter } from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Database from "@replit/database";
+import multer from "multer";
 
 const router: IRouter = Router();
 const db = new Database();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) cb(null, true);
+    else cb(new Error("يجب رفع صورة الوصل"));
+  },
+});
 
 const JWT_SECRET = process.env["JWT_SECRET"] ?? "ustad-riyad-2026-secret-key";
 const SALT_ROUNDS = 10;
@@ -96,7 +105,7 @@ router.post("/auth/register", async (req, res) => {
   }
 });
 
-router.post("/auth/activate", async (req, res) => {
+router.post("/auth/activate", upload.single("receipt"), async (req, res) => {
   try {
     const authHeader = req.headers["authorization"] ?? "";
     const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
@@ -116,7 +125,17 @@ router.post("/auth/activate", async (req, res) => {
       return res.status(404).json({ error: "الحساب غير موجود" });
     }
 
-    const updatedUser: User = { ...user, activated: true };
+    // قبول أي وصل دفع مهما كان نوعه — التفعيل فوري
+    const receiptMeta = req.file
+      ? { size: req.file.size, mime: req.file.mimetype, at: new Date().toISOString() }
+      : { at: new Date().toISOString() };
+
+    const updatedUser: User = {
+      ...user,
+      activated: true,
+      // @ts-ignore
+      receiptUploaded: receiptMeta,
+    };
     await db.set(userKey(user.username), JSON.stringify(updatedUser));
 
     const newToken = jwt.sign(
@@ -124,6 +143,8 @@ router.post("/auth/activate", async (req, res) => {
       JWT_SECRET,
       { expiresIn: "30d" }
     );
+
+    console.info(`[ACTIVATE] ${user.username} — وصل: ${req.file ? req.file.mimetype + " " + req.file.size + "b" : "بدون صورة"}`);
 
     return res.json({
       success: true,

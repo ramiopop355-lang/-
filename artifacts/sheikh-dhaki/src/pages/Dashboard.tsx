@@ -354,16 +354,20 @@ export default function Dashboard() {
   const handleLogout = () => { logout(); setLocation("/login"); };
 
   const handleActivateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return;
+    const file = e.target.files?.[0];
+    if (!file) return;
     setIsUploading(true);
     try {
       if (!authToken || authToken === "trial") {
         toast({ title: "سجّل الدخول أولاً", description: "أنشئ حساباً ثم افتح نافذة التفعيل", variant: "destructive" });
         return;
       }
+      const form = new FormData();
+      form.append("receipt", file);
       const res = await fetch("/api/auth/activate", {
         method: "POST",
         headers: { Authorization: `Bearer ${authToken}` },
+        body: form,
       });
       const data = await res.json();
       if (!res.ok) {
