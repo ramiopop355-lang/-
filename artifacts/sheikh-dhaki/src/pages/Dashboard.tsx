@@ -1200,8 +1200,8 @@ export default function Dashboard() {
                                   <Upload className="w-4 h-4 text-primary" />
                                 </div>
                                 <div className="text-center">
-                                  <p className="text-sm font-semibold text-foreground">اختر صورة وصل الدفع</p>
-                                  <p className="text-xs text-muted-foreground mt-0.5">يجب أن يظهر في الوصل مبلغ <strong>500 دج أو أكثر</strong></p>
+                                  <p className="text-sm font-semibold text-foreground">اختر صورة وصل بريدي موب</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">وصل بريد الجزائر أو بريدي موب — التفعيل فوري</p>
                                 </div>
                               </>
                             )}
