@@ -539,10 +539,10 @@ export default function Dashboard() {
           </div>
 
           {/* Countdown */}
-          <div className="bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20 rounded-2xl p-4 text-center">
-            <CalendarDays className="w-5 h-5 text-primary mx-auto mb-1" />
+          <div className="bg-gradient-to-br from-green-500/10 to-green-400/10 border border-green-500/20 rounded-2xl p-4 text-center">
+            <CalendarDays className="w-5 h-5 text-green-600 mx-auto mb-1" />
             <p className="text-xs font-medium text-muted-foreground mb-1">باقي للبكالوريا 2026</p>
-            <div className="text-4xl font-black text-primary">
+            <div className="text-4xl font-black text-green-600">
               {daysLeft}
             </div>
             <p className="text-xs font-semibold text-muted-foreground mt-0.5">يوم</p>
