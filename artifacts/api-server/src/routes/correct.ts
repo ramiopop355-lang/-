@@ -200,7 +200,7 @@ async function callOpenRouterStream(
       client.chat.completions.create({
         model: "google/gemini-2.5-flash",
         temperature: 0.2,
-        max_tokens: 3000,
+        max_tokens: 1800,
         stream: true,
         messages: [
           { role: "system", content: systemPrompt },
@@ -440,7 +440,7 @@ ${notes ? `ملاحظة الطالب: ${notes}` : ""}
             systemInstruction: SYSTEM_PROMPT,
             generationConfig: {
               temperature: 0.2,
-              maxOutputTokens: 3000,
+              maxOutputTokens: 1800,
               // @ts-ignore
               thinkingConfig: { thinkingBudget: 0 },
             },
