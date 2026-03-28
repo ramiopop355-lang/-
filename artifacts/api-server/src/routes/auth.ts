@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Database from "@replit/database";
 import multer from "multer";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const router: IRouter = Router();
 const db = new Database();
@@ -106,6 +107,57 @@ router.post("/auth/register", async (req, res) => {
   }
 });
 
+// ── التحقق من مبلغ الوصل عبر Gemini vision ──────────────────────
+async function validateReceipt(
+  imageBuffer: Buffer,
+  mimeType: string
+): Promise<{ valid: boolean; amount: number | null; reason: string }> {
+  const apiKey =
+    process.env["GEMINI_API_KEY"] ??
+    process.env["GEMINI_API_KEY_2"] ??
+    process.env["GEMINI_API_KEY_3"] ?? "";
+
+  if (!apiKey) return { valid: false, amount: null, reason: "مفتاح API غير متاح" };
+
+  try {
+    const genai = new GoogleGenerativeAI(apiKey);
+    const model = genai.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      generationConfig: { temperature: 0, maxOutputTokens: 128, responseMimeType: "application/json" },
+    });
+
+    const result = await Promise.race([
+      model.generateContent([
+        {
+          inlineData: {
+            data: imageBuffer.toString("base64"),
+            mimeType,
+          },
+        },
+        `هذه صورة وصل دفع مالي (بريدي موب أو حوالة أو تحويل بنكي جزائري).
+استخرج المبلغ المدفوع بالدينار الجزائري.
+أعد JSON فقط بدون أي نص آخر:
+{"amount": <رقم المبلغ أو null إذا لم تجده>, "valid": <true إذا كان المبلغ 500 دج أو أكثر وإلا false>}`,
+      ]),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 12_000)),
+    ]);
+
+    const raw = result.response.text().trim();
+    const parsed = JSON.parse(raw) as { amount: number | null; valid: boolean };
+
+    if (parsed.amount === null) {
+      return { valid: false, amount: null, reason: "لم نتمكن من قراءة مبلغ الوصل — تأكد من وضوح الصورة" };
+    }
+    if (!parsed.valid) {
+      return { valid: false, amount: parsed.amount, reason: `المبلغ في الوصل (${parsed.amount} دج) أقل من 500 دج المطلوب` };
+    }
+    return { valid: true, amount: parsed.amount, reason: "ok" };
+  } catch (err) {
+    console.error("[RECEIPT] Gemini error:", err);
+    return { valid: false, amount: null, reason: "تعذّر التحقق من الوصل — حاول برفع صورة أوضح" };
+  }
+}
+
 router.post("/auth/activate", upload.single("receipt"), async (req, res) => {
   try {
     const authHeader = req.headers["authorization"] ?? "";
@@ -126,16 +178,21 @@ router.post("/auth/activate", upload.single("receipt"), async (req, res) => {
       return res.status(404).json({ error: "الحساب غير موجود" });
     }
 
-    // قبول أي وصل دفع مهما كان نوعه — التفعيل فوري
-    const receiptMeta = req.file
-      ? { size: req.file.size, mime: req.file.mimetype, at: new Date().toISOString() }
-      : { at: new Date().toISOString() };
+    // يجب رفع صورة الوصل
+    if (!req.file) {
+      return res.status(400).json({ error: "يجب إرفاق صورة الوصل المالي للتفعيل" });
+    }
 
-    const updatedUser: User = {
-      ...user,
-      activated: true,
-      receiptUploaded: receiptMeta,
-    };
+    // التحقق من المبلغ عبر Gemini
+    const check = await validateReceipt(req.file.buffer, req.file.mimetype);
+    if (!check.valid) {
+      console.info(`[ACTIVATE REJECTED] ${user.username} — ${check.reason}`);
+      return res.status(400).json({ error: check.reason });
+    }
+
+    const receiptMeta = { size: req.file.size, mime: req.file.mimetype, amount: check.amount, at: new Date().toISOString() };
+
+    const updatedUser: User = { ...user, activated: true, receiptUploaded: receiptMeta };
     await db.set(userKey(user.username), JSON.stringify(updatedUser));
 
     const newToken = jwt.sign(
@@ -144,7 +201,7 @@ router.post("/auth/activate", upload.single("receipt"), async (req, res) => {
       { expiresIn: "30d" }
     );
 
-    console.info(`[ACTIVATE] ${user.username} — وصل: ${req.file ? req.file.mimetype + " " + req.file.size + "b" : "بدون صورة"}`);
+    console.info(`[ACTIVATE] ${user.username} — ${check.amount} دج`);
 
     return res.json({
       success: true,

@@ -117,28 +117,19 @@ function DailyVerse() {
   const dayOfYear = Math.floor((now.getTime() - start.getTime()) / 86_400_000);
   const verse = QURAN_VERSES[dayOfYear % QURAN_VERSES.length];
 
-  const bacDate = new Date(2026, 5, 13); // 13 يونيو 2026
-  const today = new Date(); today.setHours(0, 0, 0, 0);
-  const daysLeft = Math.max(0, Math.ceil((bacDate.getTime() - today.getTime()) / 86_400_000));
-
   return (
-    <div className="rounded-2xl mb-5 border border-primary/15 bg-gradient-to-br from-primary/5 via-card to-card shadow-sm px-4 py-3 flex items-center gap-4">
-
-      {/* العداد */}
-      <div className="shrink-0 flex flex-col items-center justify-center bg-primary/8 rounded-xl px-4 py-2 border border-primary/15 min-w-[72px]">
-        <p className="text-[0.6rem] font-bold text-primary/50 leading-none mb-1">الباك في</p>
-        <p className="text-3xl font-black text-primary tabular-nums leading-none">{daysLeft}</p>
-        <p className="text-[0.6rem] font-bold text-primary/60 leading-none mt-0.5">يوماً</p>
-      </div>
-
-      {/* الآية */}
-      <div className="flex-1 min-w-0">
-        <p className="text-sm leading-relaxed text-foreground line-clamp-2" style={{ fontFamily: "'Amiri', serif", fontWeight: 700 }}>
-          ﴿ {verse.text} ﴾
+    <div className="w-full border-b border-primary/10 bg-gradient-to-l from-primary/6 via-background to-background py-3 px-6 flex items-center justify-center gap-3">
+      <span className="text-primary/25 text-xl shrink-0 leading-none select-none" style={{ fontFamily: "'Amiri', serif" }}>﴿</span>
+      <div className="text-center">
+        <p
+          className="text-[0.95rem] leading-relaxed text-foreground/90"
+          style={{ fontFamily: "'Amiri', serif", fontWeight: 700, letterSpacing: "0.02em" }}
+        >
+          {verse.text}
         </p>
-        <p className="text-[0.65rem] text-muted-foreground mt-0.5">{verse.ref}</p>
+        <p className="text-[0.6rem] text-primary/50 font-medium mt-0.5 tracking-wide">{verse.ref}</p>
       </div>
-
+      <span className="text-primary/25 text-xl shrink-0 leading-none select-none" style={{ fontFamily: "'Amiri', serif" }}>﴾</span>
     </div>
   );
 }
@@ -544,11 +535,7 @@ export default function Dashboard() {
       toast({ title: "سجّل الدخول أولاً", description: "أنشئ حساباً ثم افتح نافذة التفعيل", variant: "destructive" });
       return;
     }
-    // تفعيل فوري — تحديث حالة المستخدم في الـ context فوراً
-    setPayUploaded(true);
-    if (user) updateUser(authToken, { ...user, activated: true });
-    toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
-    // إرسال الوصل للخادم في الخلفية وتحديث الـ token الرسمي
+    // انتظر تحقق الخادم أولاً قبل التفعيل المحلي
     setIsUploading(true);
     try {
       const form = new FormData();
@@ -559,9 +546,18 @@ export default function Dashboard() {
         body: form,
       });
       const data = await res.json();
-      if (res.ok) updateUser(data.token, data.user);
+      if (res.ok) {
+        updateUser(data.token, data.user);
+        setPayUploaded(true);
+        toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
+      } else {
+        toast({ title: "❌ لم يُقبل الوصل", description: data.error ?? "حدث خطأ غير متوقع", variant: "destructive" });
+        // إعادة تعيين حقل الملف
+        e.target.value = "";
+      }
     } catch {
-      // التفعيل المحلي مؤكد — الخادم سيُزامن عند الدخول التالي
+      toast({ title: "خطأ في الاتصال", description: "تحقق من اتصالك بالإنترنت وحاول مجدداً", variant: "destructive" });
+      e.target.value = "";
     } finally {
       setIsUploading(false);
     }
@@ -694,6 +690,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col">
+      <DailyVerse />
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
       {/* SIDEBAR */}
       <aside className="w-full md:w-80 lg:w-96 bg-card border-l border-border flex flex-col shrink-0 shadow-xl overflow-y-auto">
@@ -950,8 +947,6 @@ export default function Dashboard() {
       {/* MAIN CONTENT */}
       <main ref={boardRef} className="flex-1 p-6 overflow-y-auto">
         <div className="max-w-3xl mx-auto">
-          <DailyVerse />
-
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-xl font-black text-foreground">السبورة الإلكترونية</h1>
             {history.length > 0 && (
@@ -1197,7 +1192,7 @@ export default function Dashboard() {
                             {isUploading ? (
                               <>
                                 <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                                <span className="text-sm font-semibold text-primary">جاري التفعيل...</span>
+                                <span className="text-sm font-semibold text-primary">جاري التحقق من الوصل...</span>
                               </>
                             ) : (
                               <>
@@ -1205,8 +1200,8 @@ export default function Dashboard() {
                                   <Upload className="w-4 h-4 text-primary" />
                                 </div>
                                 <div className="text-center">
-                                  <p className="text-sm font-semibold text-foreground">اختر صورة الوصل</p>
-                                  <p className="text-xs text-muted-foreground mt-0.5">JPG, PNG · التفعيل فوري</p>
+                                  <p className="text-sm font-semibold text-foreground">اختر صورة وصل الدفع</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">يجب أن يظهر في الوصل مبلغ <strong>500 دج أو أكثر</strong></p>
                                 </div>
                               </>
                             )}
