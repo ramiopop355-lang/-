@@ -9,10 +9,12 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "wouter";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { type Components } from "react-markdown";
 import remarkMath from "remark-math";
+import remarkGfm from "remark-gfm";
 import rehypeKatex from "rehype-katex";
 import "katex/dist/katex.min.css";
+import FunctionPlot from "@/components/FunctionPlot";
 
 type HistoryItem = {
   id: string;
@@ -50,10 +52,55 @@ function useDarkModeToggle() {
   return { isDark, toggle };
 }
 
+const mdComponents: Components = {
+  code({ className, children, ...props }) {
+    const lang = /language-(\w+)/.exec(className ?? "")?.[1];
+    const raw = String(children ?? "").trim();
+    if (lang === "sigma-plot") {
+      return <FunctionPlot raw={raw} />;
+    }
+    return (
+      <code
+        className={`${className ?? ""} bg-muted text-foreground rounded px-1 py-0.5 text-sm font-mono`}
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  },
+  table({ children }) {
+    return (
+      <div className="overflow-x-auto my-3">
+        <table className="border-collapse text-sm w-full">{children}</table>
+      </div>
+    );
+  },
+  th({ children }) {
+    return (
+      <th className="border border-border bg-muted px-3 py-1.5 text-center font-semibold text-foreground">
+        {children}
+      </th>
+    );
+  },
+  td({ children }) {
+    return (
+      <td className="border border-border px-3 py-1.5 text-center text-foreground">
+        {children}
+      </td>
+    );
+  },
+};
+
 const MarkdownResult = React.memo(function MarkdownResult({ text }: { text: string }) {
   return (
     <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none text-foreground leading-relaxed">
-      <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{text}</ReactMarkdown>
+      <ReactMarkdown
+        remarkPlugins={[remarkMath, remarkGfm]}
+        rehypePlugins={[rehypeKatex]}
+        components={mdComponents}
+      >
+        {text}
+      </ReactMarkdown>
     </div>
   );
 });

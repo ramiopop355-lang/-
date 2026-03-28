@@ -131,3 +131,26 @@ mjx-container {
   text-align: center !important;
 }
 
+/* جداول الإشارة والتغيرات */
+.prose table {
+  direction: ltr;
+  width: auto !important;
+  min-width: 100%;
+}
+.prose table th,
+.prose table td {
+  text-align: center !important;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  padding: 0.35rem 0.75rem;
+}
+/* سهل التمييز بين الخلايا الفارغة والأعداد في الجداول */
+.prose table td:empty::after {
+  content: '';
+}
+/* canvas رسم بياني */
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
