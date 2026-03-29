@@ -7,7 +7,7 @@ import {
   Image as ImageIcon, XCircle, LogOut, MessageSquare, Moon, Sun, Copy, Check,
   FileText, PenLine, CheckCircle2, Zap, ShieldCheck
 } from "lucide-react";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth, getDeviceId } from "@/context/AuthContext";
 import { useLocation } from "wouter";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkMath from "remark-math";
@@ -219,7 +219,7 @@ function VerdictBadge({ text }: { text: string }) {
   );
 }
 
-function ProseBlock({ text }: { text: string }) {
+const ProseBlock = React.memo(function ProseBlock({ text }: { text: string }) {
   return (
     <div className="prose prose-sm prose-neutral dark:prose-invert max-w-none text-foreground leading-relaxed">
       <ReactMarkdown remarkPlugins={[remarkMath, remarkGfm]} rehypePlugins={[rehypeKatex]} components={mdComponents}>
@@ -227,7 +227,7 @@ function ProseBlock({ text }: { text: string }) {
       </ReactMarkdown>
     </div>
   );
-}
+});
 
 function ResultCard({ content }: { content: string }) {
   const r = parseResultBlock(`📌 النتيجة: ${content}`);
@@ -614,27 +614,29 @@ export default function Dashboard() {
     }
   }, []);
 
-  const setExercise = (f: File) => {
-    if (exercisePreviewUrl) URL.revokeObjectURL(exercisePreviewUrl);
+  const setExercise = useCallback((f: File) => {
+    setExercisePreviewUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(f);
+    });
     setExerciseFile(f);
-    setExercisePreviewUrl(URL.createObjectURL(f));
-  };
-  const clearExercise = () => {
+  }, []);
+  const clearExercise = useCallback(() => {
     setExerciseFile(null);
-    if (exercisePreviewUrl) URL.revokeObjectURL(exercisePreviewUrl);
-    setExercisePreviewUrl(null);
-  };
+    setExercisePreviewUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+  }, []);
 
-  const setAttempt = (f: File) => {
-    if (attemptPreviewUrl) URL.revokeObjectURL(attemptPreviewUrl);
+  const setAttempt = useCallback((f: File) => {
+    setAttemptPreviewUrl(prev => {
+      if (prev) URL.revokeObjectURL(prev);
+      return URL.createObjectURL(f);
+    });
     setAttemptFile(f);
-    setAttemptPreviewUrl(URL.createObjectURL(f));
-  };
-  const clearAttempt = () => {
+  }, []);
+  const clearAttempt = useCallback(() => {
     setAttemptFile(null);
-    if (attemptPreviewUrl) URL.revokeObjectURL(attemptPreviewUrl);
-    setAttemptPreviewUrl(null);
-  };
+    setAttemptPreviewUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null; });
+  }, []);
 
   const handleClearHistory = () => {
     if (confirm("هل أنت متأكد من مسح جميع التقييمات؟")) {
@@ -663,6 +665,7 @@ export default function Dashboard() {
     try {
       const form = new FormData();
       form.append("receipt", file);
+      form.append("paymentMethod", "baridimob");
       const res = await fetch("/api/auth/activate", {
         method: "POST",
         headers: { Authorization: `Bearer ${authToken}` },
@@ -714,13 +717,21 @@ export default function Dashboard() {
       formData.append("notes", notes);
       formData.append("mode", solveMode ? "solve" : "correct");
 
+      formData.append("deviceId", getDeviceId());
+
       const response = await fetch("/api/correct", {
         method: "POST",
+        headers: { Authorization: `Bearer ${authToken ?? ""}` },
         body: formData,
       });
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({ error: "خطأ غير معروف" }));
+        if (err.code === "TRIAL_EXHAUSTED") {
+          setShowPayment(true);
+          setIsPending(false);
+          return;
+        }
         throw new Error(err.error || `خطأ: ${response.status}`);
       }
 

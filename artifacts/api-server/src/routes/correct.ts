@@ -3,6 +3,23 @@ import multer from "multer";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { evaluate } from "mathjs";
 import OpenAI from "openai";
+import Database from "@replit/database";
+import jwt from "jsonwebtoken";
+
+const db = new Database();
+const JWT_SECRET = process.env["JWT_SECRET"] ?? "ustad-riyad-2026-secret-key";
+const TRIAL_MAX  = 3;
+
+async function getTrialCount(key: string): Promise<number> {
+  const r = await db.get(key).catch(() => ({ ok: false, value: null }));
+  if (!r.ok || !r.value) return 0;
+  const n = parseInt(String(r.value), 10);
+  return isNaN(n) ? 0 : n;
+}
+
+async function incrementTrial(key: string, current: number): Promise<void> {
+  await db.set(key, String(current + 1)).catch(() => null);
+}
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -262,7 +279,7 @@ async function callOpenRouterStream(
   exerciseBase64: string, exerciseMime: string,
   attemptBase64: string,  attemptMime: string,
   systemPrompt: string,   userMessage: string,
-  onChunk: (text: string) => void,
+  onChunk: (text: string) => void | Promise<void>,
   isSolveMode = false
 ): Promise<boolean> {
   const client = getOpenRouterClient();
@@ -291,7 +308,7 @@ async function callOpenRouterStream(
     );
     for await (const chunk of stream) {
       const text = chunk.choices[0]?.delta?.content ?? "";
-      if (text) onChunk(text);
+      if (text) await onChunk(text);
     }
     return true;
   } catch (err) {
@@ -483,6 +500,7 @@ router.post(
     try {
       const shoba = (req.body.shoba as string) || "رياضيات";
       const notes = (req.body.notes as string) || "";
+      const deviceId = (req.body.deviceId as string) || "unknown";
       const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
 
       const exerciseFile = files?.["exercise"]?.[0];
@@ -492,6 +510,37 @@ router.post(
         res.status(400).json({ error: "يجب رفع صورة التمرين" });
         return;
       }
+
+      // ── التحقق من الاشتراك قبل فتح SSE ──────────────────────────────
+      const authHeader = req.headers["authorization"] ?? "";
+      const rawToken   = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+      let isActivated  = false;
+      let trialDbKey   = `trial:device:${deviceId}`;
+
+      if (rawToken && rawToken !== "trial") {
+        try {
+          const payload = jwt.verify(rawToken, JWT_SECRET) as { username?: string; activated?: boolean };
+          isActivated  = payload.activated === true;
+          if (!isActivated && payload.username) {
+            trialDbKey = `trial:user:${payload.username.toLowerCase().trim()}`;
+          }
+        } catch {
+          // رمز غير صالح — نُعامله كمستخدم تجريبي
+        }
+      }
+
+      let trialCount = 0;
+      if (!isActivated) {
+        trialCount = await getTrialCount(trialDbKey);
+        if (trialCount >= TRIAL_MAX) {
+          res.status(402).json({
+            error: "انتهت نسختك التجريبية — فعّل حسابك بـ 500 دج للاستمرار",
+            code: "TRIAL_EXHAUSTED",
+          });
+          return;
+        }
+      }
+      // ────────────────────────────────────────────────────────────────
 
       const mode = (req.body.mode as string) || (attemptFile ? "correct" : "solve");
       const isSolveMode = mode === "solve" || !attemptFile;
@@ -538,12 +587,24 @@ ${notes ? `ملاحظة الطالب: ${notes}` : ""}
 ${mathjsVerification ? `\n**[نتائج التحقق الحسابي التلقائي — استخدمها كمرجع داخلي ثابت]:**${mathjsVerification}\n` : ""}
 قيّم محاولة الطالب وفق الهيكل البيداغوجي الإلزامي ومنهاج البكالوريا الجزائرية 2026.`;
 
+        // ── تتبع التجارب: يُحسب عند أول رمز ناجح من AI ──
+        let trialCounted = false;
+        const countTrialOnce = async () => {
+          if (!isActivated && !trialCounted) {
+            trialCounted = true;
+            await incrementTrial(trialDbKey, trialCount);
+          }
+        };
+
         // ── 1️⃣ OpenRouter أولاً (مدفوع — أولوية قصوى) ──
         const orSuccess = await callOpenRouterStream(
           exerciseBase64, exerciseMime,
           attemptBase64,  attemptMime,
           SYSTEM_PROMPT,  userMessage,
-          (text) => res.write(`data: ${JSON.stringify({ content: text })}\n\n`),
+          async (text) => {
+            await countTrialOnce();
+            res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
+          },
           isSolveMode
         );
 
@@ -571,7 +632,10 @@ ${mathjsVerification ? `\n**[نتائج التحقق الحسابي التلقا
 
           for await (const chunk of result.stream) {
             const text = chunk.text();
-            if (text) res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
+            if (text) {
+              await countTrialOnce();
+              res.write(`data: ${JSON.stringify({ content: text })}\n\n`);
+            }
           }
         }
 

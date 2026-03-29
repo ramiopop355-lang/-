@@ -193,10 +193,7 @@ export default function Login() {
     form.append("paymentMethod", paymentMethod);
 
     if (paymentMethod === "baridimob") {
-      // بريدي موب — تفعيل فوري بدون انتظار
-      setUploaded(true);
-      if (user) updateUser(authToken, { ...user, activated: true });
-      toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
+      // بريدي موب — انتظر تأكيد الخادم قبل التفعيل
       setIsUploading(true);
       try {
         const res = await fetch("/api/auth/activate", {
@@ -205,9 +202,15 @@ export default function Login() {
           body: form,
         });
         const data = await res.json();
-        if (res.ok) updateUser(data.token, data.user);
+        if (res.ok) {
+          updateUser(data.token, data.user);
+          setUploaded(true);
+          toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
+        } else {
+          toast({ title: "❌ خطأ في التفعيل", description: data.error ?? "حاول مجدداً", variant: "destructive" });
+        }
       } catch {
-        // التفعيل المحلي مؤكد — الخادم سيُزامن لاحقاً
+        toast({ title: "خطأ في الاتصال", description: "تأكد من اتصالك بالإنترنت وحاول مجدداً", variant: "destructive" });
       } finally {
         setIsUploading(false);
       }
