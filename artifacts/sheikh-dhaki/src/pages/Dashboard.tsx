@@ -308,8 +308,8 @@ function SectionCard({ section }: { section: AISection }) {
   const isVerdict = section.title === "الحكم";
   const isResult  = section.title === "النتيجة";
   return (
-    <div className={`rounded-xl overflow-hidden ${s.border} ${s.bg}`}>
-      <div className="flex items-center gap-2 px-4 py-2 border-b border-black/5 dark:border-white/5">
+    <div className={`rounded-xl overflow-hidden ${s.border} ${s.bg}`} style={{ boxShadow: "0 2px 8px -2px rgba(0,0,0,0.06)" }}>
+      <div className="flex items-center gap-2 px-4 py-2 border-b border-black/5 dark:border-white/5" style={{ background: "rgba(0,0,0,0.015)" }}>
         <span className="text-sm leading-none">{s.icon}</span>
         <span className={`text-[0.8rem] font-bold tracking-wide ${s.header}`}>{s.label}</span>
       </div>
@@ -815,26 +815,35 @@ export default function Dashboard() {
   const canSubmit = !!exerciseFile && (solveMode || !!attemptFile) && (isActivated || !trialExpired);
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-hidden">
       <DailyVerse />
       <div className="flex flex-col md:flex-row flex-1 min-h-0">
       {/* SIDEBAR */}
-      <aside className="w-full md:w-80 lg:w-96 bg-card border-l border-border flex flex-col shrink-0 shadow-xl overflow-y-auto">
+      <aside className="w-full md:w-80 lg:w-96 bg-card border-l border-border/60 flex flex-col shrink-0 overflow-y-auto" style={{ boxShadow: "4px 0 40px -8px hsl(var(--primary)/0.18), 0 0 0 1px hsl(var(--border)/0.8)" }}>
         <div className="p-6 flex-1 flex flex-col gap-5">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div
+            className="flex items-center justify-between rounded-2xl px-4 py-3 -mx-1"
+            style={{
+              background: "linear-gradient(135deg, rgba(99,102,241,0.10) 0%, rgba(139,92,246,0.05) 60%, transparent 100%)",
+              border: "1px solid rgba(99,102,241,0.15)",
+            }}
+          >
             <div>
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", boxShadow: "0 2px 8px rgba(99,102,241,0.3)" }}>
-                  <span className="text-sm font-black text-white" style={{ fontFamily: "serif" }}>Σ</span>
+              <div className="flex items-center gap-2.5">
+                <div
+                  className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                  style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", boxShadow: "0 4px 14px rgba(99,102,241,0.45)" }}
+                >
+                  <span className="text-base font-black text-white" style={{ fontFamily: "serif" }}>Σ</span>
                 </div>
                 <div>
-                  <h2 className="text-sm font-black text-foreground leading-tight">سِيغْمَا</h2>
-                  <p className="text-xs text-primary/70 leading-tight">مصحح الرياضيات · بكالوريا 2026</p>
+                  <h2 className="text-sm font-black leading-tight" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>سِيغْمَا</h2>
+                  <p className="text-[10px] text-muted-foreground leading-tight">مصحح الرياضيات · بكالوريا 2026</p>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
               <button
                 onClick={toggle}
                 className="p-2 text-muted-foreground hover:text-primary rounded-full transition-colors"
@@ -1074,10 +1083,13 @@ export default function Dashboard() {
       </aside>
 
       {/* MAIN CONTENT */}
-      <main ref={boardRef} className="flex-1 p-6 overflow-y-auto">
+      <main ref={boardRef} className="flex-1 p-6 overflow-y-auto bg-muted/20">
         <div className="max-w-3xl mx-auto">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-xl font-black text-foreground">السبورة الإلكترونية</h1>
+            <h1
+              className="text-xl font-black"
+              style={{ background: "linear-gradient(135deg, hsl(var(--foreground)) 30%, hsl(var(--primary)))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+            >السبورة الإلكترونية</h1>
             {history.length > 0 && (
               <button
                 onClick={handleClearHistory}
@@ -1097,7 +1109,8 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="bg-card border-2 border-primary/20 rounded-2xl p-6 shadow-sm mb-4"
+                className="rounded-2xl p-6 mb-4"
+                style={{ background: "linear-gradient(135deg, hsl(var(--card)) 60%, hsl(var(--primary)/0.05))", border: "1.5px solid hsl(var(--primary)/0.22)", boxShadow: "0 4px 24px -6px hsl(var(--primary)/0.20)" }}
               >
                 <div className="flex items-center gap-3">
                   <div className="flex gap-1">
@@ -1122,7 +1135,8 @@ export default function Dashboard() {
               <motion.div
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-card border-2 border-primary/30 rounded-2xl p-6 shadow-sm mb-4"
+                className="rounded-2xl p-6 mb-4"
+                style={{ background: "linear-gradient(135deg, hsl(var(--card)) 50%, hsl(var(--primary)/0.06))", border: "1.5px solid hsl(var(--primary)/0.30)", boxShadow: "0 6px 30px -8px hsl(var(--primary)/0.25)" }}
               >
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
@@ -1142,8 +1156,15 @@ export default function Dashboard() {
           {/* History */}
           {!streamingText && history.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
-              <div className="w-20 h-20 rounded-2xl bg-primary/8 border border-primary/15 flex items-center justify-center mb-5">
-                <MessageSquare className="w-10 h-10 text-primary/40" />
+              <div
+                className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5"
+                style={{
+                  background: "linear-gradient(135deg, rgba(99,102,241,0.14), rgba(139,92,246,0.07))",
+                  border: "1.5px solid rgba(99,102,241,0.18)",
+                  boxShadow: "0 0 40px -8px rgba(99,102,241,0.30), 0 4px 16px -4px rgba(99,102,241,0.15)",
+                }}
+              >
+                <MessageSquare className="w-10 h-10" style={{ color: "rgba(99,102,241,0.55)" }} />
               </div>
               <h3 className="text-base font-bold text-foreground mb-2">السبورة فارغة</h3>
               <p className="text-sm text-muted-foreground max-w-xs">
@@ -1161,9 +1182,13 @@ export default function Dashboard() {
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, scale: 0.98 }}
-                    className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden"
+                    className="rounded-2xl overflow-hidden"
+                    style={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border)/0.6)", boxShadow: "0 4px 24px -6px rgba(99,102,241,0.12), 0 1px 4px -2px rgba(0,0,0,0.06)" }}
                   >
-                    <div className="flex items-center justify-between px-6 pt-5 pb-3 border-b border-border/60">
+                    <div
+                      className="flex items-center justify-between px-6 pt-4 pb-3 border-b border-border/50"
+                      style={{ background: "linear-gradient(to left, rgba(99,102,241,0.06), rgba(139,92,246,0.03), transparent)" }}
+                    >
                       <span className="inline-flex items-center gap-1.5 bg-primary/10 text-primary text-xs font-bold px-3 py-1 rounded-full">
                         <Sparkles className="w-3 h-3" />
                         {item.shoba}
