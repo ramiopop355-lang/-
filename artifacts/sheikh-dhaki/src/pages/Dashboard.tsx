@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, Trash2, CalendarDays, Upload, ChevronDown,
   Image as ImageIcon, XCircle, LogOut, MessageSquare, Moon, Sun, Copy, Check,
-  FileText, PenLine, CheckCircle2, Zap, ShieldCheck, BookOpen, ChevronUp
+  FileText, PenLine, CheckCircle2, Zap, ShieldCheck, BookOpen, ChevronUp,
+  AlertTriangle, Lightbulb, X
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useLocation } from "wouter";
@@ -159,6 +160,103 @@ function DailyVerse() {
         <p className="text-xs text-primary/50 font-medium mt-1 tracking-wide">{verse.ref}</p>
       </div>
       <span className="text-primary/30 text-2xl shrink-0 leading-none select-none" style={{ fontFamily: "'Amiri', serif" }}>﴾</span>
+    </div>
+  );
+}
+
+// ── بيانات الأخطاء الشائعة ────────────────────────────────────────
+interface MistakeItem { mistake: string; fix: string; }
+interface MistakeTopic { id: string; icon: string; title: string; color: string; bg: string; border: string; mistakes: MistakeItem[]; }
+
+const MISTAKE_TOPICS: MistakeTopic[] = [
+  { id: "limits", icon: "📉", title: "الدوال والحدود", color: "text-blue-700 dark:text-blue-400", bg: "bg-blue-50 dark:bg-blue-950/30", border: "border-blue-300 dark:border-blue-700", mistakes: [
+    { mistake: "نسيان التحقق من مجال الدالة قبل حساب النهاية", fix: "دائماً حدد مجال الدالة (D_f) قبل أي حساب — خاصة عند وجود جذر أو كسر" },
+    { mistake: 'الخلط بين "∞/∞" و"0/0" — معالجتهما مختلفة', fix: 'في ∞/∞: اقسم على القوة الأكبر. في 0/0: بسّط' },
+    { mistake: "نسيان: lim(sin x / x) = 1 عند x→0", fix: "هذه القاعدة الذهبية لا تُنسى في تمارين الحدود المثلثية" },
+    { mistake: "الخطأ في إشارة النهاية عند ±∞ مع الجذور", fix: "√(x²) = |x|، وعند x→-∞ يكون √(x²) = -x (انتبه للإشارة!)" },
+  ]},
+  { id: "derivatives", icon: "📐", title: "الاشتقاق والدراسة", color: "text-violet-700 dark:text-violet-400", bg: "bg-violet-50 dark:bg-violet-950/30", border: "border-violet-300 dark:border-violet-700", mistakes: [
+    { mistake: "(uv)' = u'v + uv' — نسيان أحد الحدين", fix: "اكتب الصيغة قبل التطبيق: الأول × مشتق الثاني + مشتق الأول × الثاني" },
+    { mistake: "[f(g(x))]' = f'(g(x)) × g'(x) — نسيان مشتق الدالة الداخلية", fix: "نسيان ضرب مشتق الدالة الداخلية هو أشيع خطأ في الاشتقاق" },
+    { mistake: "إعلان نقاط الانعطاف بدون التحقق أن f'' تغيّر إشارتها", fix: "f''(x₀)=0 شرط ضروري وليس كافياً — تحقق من تغيّر الإشارة" },
+    { mistake: "نسيان دراسة حدود الدالة عند أطراف مجالها في جدول التغيرات", fix: "جدول التغيرات يبدأ وينتهي بقيم النهايات أو قيم الحافة" },
+    { mistake: "خطأ في معادلة المماس: y = f'(a)(x-a) + f(a)", fix: "عند النقطة (a, f(a)): y = f'(a)(x-a) + f(a)" },
+  ]},
+  { id: "expo", icon: "⚡", title: "الدوال الأسية واللوغاريتمية", color: "text-orange-700 dark:text-orange-400", bg: "bg-orange-50 dark:bg-orange-950/30", border: "border-orange-300 dark:border-orange-700", mistakes: [
+    { mistake: "نسيان أن ln(x) معرّفة فقط لـ x > 0", fix: "قبل استخدام ln اشترط دائماً أن ما بداخله أكبر من صفر" },
+    { mistake: "خطأ: ln(a+b) ≠ ln(a) + ln(b)  —  الصحيح: ln(a×b) = ln(a) + ln(b)", fix: "خاصيات اللوغاريتم: جمع↔ضرب، طرح↔قسمة، تكرار↔أس" },
+    { mistake: "نسيان أن eˣ دائماً موجبة تماماً (> 0)", fix: "eˣ > 0 لكل x∈ℝ — يُستخدم لإثبات إشارة الدالة أو تبسيطها" },
+    { mistake: "تطبيق ln على طرف واحد فقط عند حل المعادلات", fix: "طبّق ln على الطرفين: إذا eˣ = 5  فإن  x = ln(5)" },
+  ]},
+  { id: "integral", icon: "∫", title: "التكامل وحساب المساحات", color: "text-green-700 dark:text-green-400", bg: "bg-green-50 dark:bg-green-950/30", border: "border-green-300 dark:border-green-700", mistakes: [
+    { mistake: "نسيان ثابت التكامل C في التكامل غير المحدود", fix: "∫f(x)dx = F(x) + C — الثابت C إجباري" },
+    { mistake: "حساب المساحة بدون القيمة المطلقة عندما الدالة تحت المحور", fix: "المساحة = |∫f(x)dx|، إذا f<0 الناتج سالب — خذ قيمته المطلقة" },
+    { mistake: "∫u dv = uv - ∫v du — نسيان طرح الجزء الثاني", fix: "اختر u أبسط لاشتقاقه، dv أبسط لتكامله، ثم طبّق الصيغة بدقة" },
+    { mistake: "المساحة بين منحنيَين بدون التحقق أيهما أعلى", fix: "المساحة = ∫|f(x)-g(x)|dx — تحقق من إشارة f-g في كل فترة" },
+    { mistake: "نسيان القسمة على مشتق الدالة الداخلية في التكامل المركّب", fix: "مثال: ∫e^(2x)dx = e^(2x)/2 + C (تقسم على 2 مشتق 2x)" },
+  ]},
+  { id: "sequences", icon: "🔢", title: "المتتاليات والتراتب", color: "text-indigo-700 dark:text-indigo-400", bg: "bg-indigo-50 dark:bg-indigo-950/30", border: "border-indigo-300 dark:border-indigo-700", mistakes: [
+    { mistake: "الخلط بين مجموع المتتالية الحسابية والهندسية", fix: "حسابية: Sₙ = n(u₁+uₙ)/2  |  هندسية: Sₙ = u₁(1-qⁿ)/(1-q)" },
+    { mistake: "نسيان التحقق من الشروط قبل تطبيق الصيغ", fix: "تحقق من نوع المتتالية وشروطها قبل التطبيق" },
+    { mistake: "الخلط بين uₙ₊₁ - uₙ و uₙ₊₁/uₙ في برهان التراتب", fix: "للحسابية: استخدم الطرح. للهندسية (q>0): استخدم القسمة أو الطرح" },
+    { mistake: "نسيان خطوة الأساس أو الوراثة في البرهان بالتراتب", fix: "ثلاث خطوات إلزامية: التحقق من الأساس → الافتراض → الاستنتاج" },
+  ]},
+  { id: "complex", icon: "🔵", title: "الأعداد المركبة", color: "text-cyan-700 dark:text-cyan-400", bg: "bg-cyan-50/80 dark:bg-cyan-950/30", border: "border-cyan-300 dark:border-cyan-700", mistakes: [
+    { mistake: "(a+bi)(c+di) — نسيان أن i² = -1", fix: "طوّر كاملاً: ac + adi + bci + bdi² = (ac-bd) + (ad+bc)i" },
+    { mistake: "خطأ في حساب المعامل: |z|² = a²+b² وليس a²-b²", fix: "|a+bi| = √(a²+b²)  ،  |z|² = z × z̄ حيث z̄ = a-bi" },
+    { mistake: "خطأ في إيجاد الحجة: نسيان ربع الدائرة الصحيح", fix: "انظر إشارتي a و b: إذا a>0 وb>0 → الربع الأول" },
+    { mistake: "الخلط بين الشكل المثلثي والأسي: r(cosθ+i sinθ) = re^(iθ)", fix: "صيغة أويلر: e^(iθ) = cosθ + i sinθ" },
+  ]},
+  { id: "proba", icon: "🎲", title: "الإحصاء والاحتمالات", color: "text-amber-700 dark:text-amber-400", bg: "bg-amber-50 dark:bg-amber-950/30", border: "border-amber-300 dark:border-amber-700", mistakes: [
+    { mistake: "P(A∪B) ≠ P(A)+P(B) — نسيان طرح P(A∩B)", fix: "P(A∪B) = P(A) + P(B) - P(A∩B)  ←  طرح التقاطع إجباري" },
+    { mistake: "الخلط بين الأحداث المتنافية والأحداث المستقلة", fix: "متنافيان: P(A∩B)=0  |  مستقلان: P(A∩B)=P(A)×P(B)" },
+    { mistake: "P(A|B): قسمة على P(B) وليس على 1", fix: "P(A|B) = P(A∩B) / P(B)  ←  المقام P(B) وليس 1" },
+    { mistake: "الخلط بين الترتيب (Arrangements) والتوليف (Combinations)", fix: "Aⁿₖ = n!/(n-k)!  |  Cⁿₖ = n!/[k!(n-k)!]" },
+    { mistake: "نسيان قاعدة المتمم: P(Ā) = 1 - P(A)", fix: "عندما يصعب حساب الحدث مباشرةً — احسب متممه وأطرحه من 1" },
+  ]},
+  { id: "geometry", icon: "📏", title: "الهندسة التحليلية والفضاء", color: "text-rose-700 dark:text-rose-400", bg: "bg-rose-50 dark:bg-rose-950/30", border: "border-rose-300 dark:border-rose-700", mistakes: [
+    { mistake: "نسيان التحقق من التوازي أو التعامد قبل تطبيق النظريات", fix: "ناقلان موازيان: أحدهما مضاعف للآخر" },
+    { mistake: "معادلة المستوى: نسيان أن ax+by+cz+d=0 وليس ax+by+cz=0", fix: "المتجه العمودي (n) = (a,b,c)، d يُحسب بتعويض نقطة من المستوى" },
+    { mistake: "المسافة من نقطة إلى مستوى: استخدام الصيغة الخاطئة", fix: "d(M,P) = |ax₀+by₀+cz₀+d| / √(a²+b²+c²)" },
+  ]},
+];
+
+function MistakeTopicCard({ topic }: { topic: MistakeTopic }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className={`rounded-2xl border overflow-hidden ${topic.border} ${topic.bg}`} style={{ boxShadow: "0 2px 12px -4px rgba(0,0,0,0.08)" }}>
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between px-4 py-3.5 text-right">
+        <div className="flex items-center gap-3">
+          <span className="text-xl leading-none">{topic.icon}</span>
+          <div>
+            <p className={`text-sm font-black ${topic.color}`}>{topic.title}</p>
+            <p className="text-[11px] text-muted-foreground">{topic.mistakes.length} أخطاء شائعة</p>
+          </div>
+        </div>
+        <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.2 }}>
+          <ChevronDown className={`w-4 h-4 ${topic.color}`} />
+        </motion.div>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22, ease: "easeInOut" }} className="overflow-hidden">
+            <div className="px-4 pb-4 flex flex-col gap-2.5 border-t border-black/8 dark:border-white/8 pt-3">
+              {topic.mistakes.map((m, i) => (
+                <div key={i} className="bg-white/70 dark:bg-black/20 rounded-xl p-3 space-y-1.5">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0 text-red-500 dark:text-red-400 mt-0.5" />
+                    <p className="text-sm font-semibold text-foreground leading-relaxed">{m.mistake}</p>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Lightbulb className="w-3.5 h-3.5 shrink-0 text-amber-500 mt-0.5" />
+                    <p className="text-xs text-muted-foreground leading-relaxed">{m.fix}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
@@ -483,6 +581,7 @@ export default function Dashboard() {
   const [payUploaded, setPayUploaded] = useState(false);
   const [xp, setXp] = useState(() => parseInt(localStorage.getItem(XP_KEY) || "0", 10));
   const [streak, setStreak] = useState(() => parseInt(localStorage.getItem(STREAK_KEY) || "0", 10));
+  const [showMistakes, setShowMistakes] = useState(false);
 
   const { logout, user, token: authToken, updateUser } = useAuth();
   const [, setLocation] = useLocation();
@@ -1290,7 +1389,7 @@ export default function Dashboard() {
 
       {/* ═══ فقاعة الأخطاء الشائعة ═══ */}
       <motion.button
-        onClick={() => setLocation("/mistakes")}
+        onClick={() => setShowMistakes(v => !v)}
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 1.2, type: "spring", stiffness: 260, damping: 22 }}
@@ -1299,20 +1398,105 @@ export default function Dashboard() {
         className="fixed bottom-6 left-1/2 z-40 flex items-center gap-2.5 px-4 py-3 rounded-full"
         style={{
           transform: "translateX(-50%)",
-          background: "linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #7c3aed 100%)",
+          background: showMistakes
+            ? "linear-gradient(135deg, #1e1b4b 0%, #3730a3 50%, #5b21b6 100%)"
+            : "linear-gradient(135deg, #312e81 0%, #4f46e5 50%, #7c3aed 100%)",
           boxShadow: "0 4px 24px rgba(99,102,241,0.50), 0 1px 0 rgba(255,255,255,0.08) inset",
           border: "1px solid rgba(139,92,246,0.45)",
         }}
       >
-        <div
-          className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
-          style={{ background: "rgba(255,255,255,0.15)" }}
-        >
+        <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.15)" }}>
           <BookOpen className="w-3.5 h-3.5 text-white" />
         </div>
         <span className="text-sm font-black text-white whitespace-nowrap">أكثر الأخطاء شيوعاً</span>
-        <ChevronUp className="w-4 h-4 text-indigo-200" />
+        <motion.div animate={{ rotate: showMistakes ? 180 : 0 }} transition={{ duration: 0.25 }}>
+          <ChevronUp className="w-4 h-4 text-indigo-200" />
+        </motion.div>
       </motion.button>
+
+      {/* ═══ Mistakes Bottom Sheet ═══ */}
+      <AnimatePresence>
+        {showMistakes && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              key="mistakes-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              onClick={() => setShowMistakes(false)}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            />
+
+            {/* Sheet */}
+            <motion.div
+              key="mistakes-sheet"
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", stiffness: 340, damping: 38 }}
+              className="fixed bottom-0 left-0 right-0 z-50 flex flex-col rounded-t-3xl overflow-hidden"
+              style={{
+                maxHeight: "85vh",
+                background: "hsl(var(--background))",
+                boxShadow: "0 -8px 40px rgba(0,0,0,0.25)",
+                border: "1px solid rgba(99,102,241,0.20)",
+                borderBottom: "none",
+              }}
+            >
+              {/* Pull handle */}
+              <div className="flex justify-center pt-3 pb-1 shrink-0">
+                <div className="w-10 h-1 rounded-full bg-border opacity-60" />
+              </div>
+
+              {/* Header */}
+              <div
+                className="flex items-center gap-3 px-5 py-3.5 shrink-0 border-b border-border/60"
+                style={{ background: "linear-gradient(135deg, hsl(var(--card)) 60%, rgba(99,102,241,0.06))" }}
+              >
+                <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", boxShadow: "0 3px 10px rgba(99,102,241,0.4)" }}>
+                  <BookOpen className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-sm font-black leading-tight" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+                    أكثر الأخطاء شيوعاً في الباك
+                  </h2>
+                  <p className="text-[10px] text-muted-foreground leading-tight">
+                    {MISTAKE_TOPICS.reduce((s, t) => s + t.mistakes.length, 0)} خطأ موثّق · {MISTAKE_TOPICS.length} وحدات
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowMistakes(false)}
+                  className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Scrollable content */}
+              <div className="overflow-y-auto flex-1 p-4 pb-24 flex flex-col gap-3">
+                <div
+                  className="rounded-2xl px-4 py-3.5 flex items-center gap-3 mb-1"
+                  style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.10), rgba(139,92,246,0.05))", border: "1.5px solid rgba(99,102,241,0.18)" }}
+                >
+                  <span className="text-2xl leading-none">🎯</span>
+                  <div>
+                    <p className="text-sm font-black text-foreground">تعلّم من أخطاء غيرك</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">هذه الأخطاء جُمعت من آلاف تصحيحات الباك</p>
+                  </div>
+                </div>
+                {MISTAKE_TOPICS.map(topic => (
+                  <MistakeTopicCard key={topic.id} topic={topic} />
+                ))}
+                <p className="text-center text-xs text-muted-foreground mt-1 px-4 leading-relaxed">
+                  💡 ارفع تمرينك لسِيغْمَا وهو يشوف أخطاءك تحديداً
+                </p>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Payment Modal */}
       <AnimatePresence>
