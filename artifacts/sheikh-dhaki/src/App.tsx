@@ -11,7 +11,6 @@ const Login = lazy(() => import("@/pages/Login"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Privacy = lazy(() => import("@/pages/Privacy"));
 const Offline = lazy(() => import("@/pages/Offline"));
-const CommonMistakes = lazy(() => import("@/pages/CommonMistakes"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -37,9 +36,6 @@ function Router() {
       <Switch>
         <Route path="/login" component={Login} />
         <Route path="/privacy" component={Privacy} />
-        <Route path="/mistakes">
-          <ProtectedRoute component={CommonMistakes} />
-        </Route>
         <Route path="/">
           <ProtectedRoute component={Dashboard} />
         </Route>
