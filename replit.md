@@ -103,6 +103,20 @@ Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used b
 
 Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
 
+## Sigma Bac — ميزات الدفع
+
+### طرق الدفع
+- **بريدي موب**: تفعيل فوري — أي صورة وصل = تفعيل مباشر (بدون تحقق AI)
+- **CCP بريد الجزائر**: يُرسل الوصل لـ Gemini (OpenRouter أولاً → Gemini keys rotation) للتحقق أنه وصل CCP حقيقي. الرفض يُعاد بـ `code: INVALID_CCP_RECEIPT` + `reason` بالعربية.
+
+### `/api/auth/activate` (POST, multipart/form-data)
+- `receipt`: صورة الوصل (required)
+- `paymentMethod`: `"baridimob"` | `"ccp"` (default: `"baridimob"`)
+- يُخزن في `receiptUploaded.method` في قاعدة البيانات
+
+### رقم CCP
+- الرقم الحالي في `Login.tsx` هو placeholder: `"1234567890 / clé 89"` — يجب استبداله برقم CCP الحقيقي
+
 ### `scripts` (`@workspace/scripts`)
 
 Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.

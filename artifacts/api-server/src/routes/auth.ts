@@ -3,6 +3,167 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Database from "@replit/database";
 import multer from "multer";
+import https from "https";
+
+// ── تحليل وصل CCP بالذكاء الاصطناعي ─────────────────────────────────
+const GEMINI_KEYS = [
+  process.env["GEMINI_API_KEY"],
+  process.env["GEMINI_API_KEY_2"],
+  process.env["GEMINI_API_KEY_3"],
+  process.env["GEMINI_API_KEY_4"],
+  process.env["GEMINI_API_KEY_5"],
+].filter(Boolean) as string[];
+
+let geminiKeyIndex = 0;
+function nextGeminiKey(): string | null {
+  if (!GEMINI_KEYS.length) return null;
+  const key = GEMINI_KEYS[geminiKeyIndex % GEMINI_KEYS.length];
+  geminiKeyIndex++;
+  return key ?? null;
+}
+
+async function verifyCCPReceipt(imageBuffer: Buffer, mimeType: string): Promise<{ valid: boolean; reason: string }> {
+  const base64Image = imageBuffer.toString("base64");
+
+  const prompt = `أنت خبير في التحقق من وثائق الدفع الجزائرية.
+حلل الصورة المرفقة وحدد بدقة إذا كانت وصل تأكيد دفع حقيقي عبر CCP (الحساب البريدي الجاري) الصادر من بريد الجزائر / Algérie Poste.
+
+تحقق من وجود العناصر التالية:
+- شعار بريد الجزائر أو أي مؤشر على CCP
+- رقم الحساب البريدي (CCP)
+- مبلغ الدفع
+- تاريخ العملية
+- رقم مرجعي أو رقم العملية
+
+أجب بالتنسيق الآتي فقط (سطر واحد):
+VALID: [نعم/لا] | REASON: [سبب موجز بالعربية]
+
+إذا كانت الصورة ضبابية أو غير واضحة ولكنها تُظهر عناصر وصل CCP، اعتبرها صالحة.
+إذا كانت الصورة لا علاقة لها بوصل CCP (مثلاً صورة شخصية، منظر طبيعي، شاشة فارغة، إلخ)، اعتبرها غير صالحة.`;
+
+  const body = JSON.stringify({
+    contents: [
+      {
+        parts: [
+          { text: prompt },
+          { inline_data: { mime_type: mimeType, data: base64Image } }
+        ]
+      }
+    ],
+    generationConfig: { temperature: 0.1, maxOutputTokens: 120 }
+  });
+
+  // نحاول OpenRouter أولاً
+  const openrouterKey = process.env["OPENROUTER_API_KEY"];
+  if (openrouterKey) {
+    try {
+      const result = await callOpenRouterVision(openrouterKey, base64Image, mimeType, prompt);
+      return parseVerificationResult(result);
+    } catch (err) {
+      console.warn("[CCP-VERIFY] OpenRouter failed, trying Gemini keys:", err);
+    }
+  }
+
+  // الاحتياط: مفاتيح Gemini المباشرة
+  for (let attempt = 0; attempt < GEMINI_KEYS.length; attempt++) {
+    const key = nextGeminiKey();
+    if (!key) break;
+    try {
+      const result = await callGeminiDirect(key, body);
+      return parseVerificationResult(result);
+    } catch (err) {
+      console.warn(`[CCP-VERIFY] Gemini key ${attempt + 1} failed:`, err);
+    }
+  }
+
+  // إذا فشل كل شيء نُفعّل تلقائياً لتجنب حجب المستخدم
+  console.error("[CCP-VERIFY] All providers failed — allowing activation as fallback");
+  return { valid: true, reason: "تحقق تلقائي بسبب عطل مؤقت" };
+}
+
+function callOpenRouterVision(apiKey: string, base64Image: string, mimeType: string, prompt: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify({
+      model: "google/gemini-2.5-flash-preview",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: `data:${mimeType};base64,${base64Image}` } }
+          ]
+        }
+      ],
+      max_tokens: 120,
+      temperature: 0.1
+    });
+
+    const req = https.request({
+      hostname: "openrouter.ai",
+      path: "/api/v1/chat/completions",
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://sigmaaidzbac.replit.app",
+        "X-Title": "Sigma Bac",
+        "Content-Length": Buffer.byteLength(payload),
+      }
+    }, (res) => {
+      let data = "";
+      res.on("data", (chunk) => data += chunk);
+      res.on("end", () => {
+        try {
+          const parsed = JSON.parse(data);
+          const text = parsed.choices?.[0]?.message?.content ?? "";
+          if (!text) return reject(new Error("Empty response from OpenRouter"));
+          resolve(text);
+        } catch (e) { reject(e); }
+      });
+    });
+    req.on("error", reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
+function callGeminiDirect(apiKey: string, body: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const path = `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const req = https.request({
+      hostname: "generativelanguage.googleapis.com",
+      path,
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(body) }
+    }, (res) => {
+      let data = "";
+      res.on("data", (chunk) => data += chunk);
+      res.on("end", () => {
+        try {
+          const parsed = JSON.parse(data);
+          const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
+          if (!text) return reject(new Error("Empty response from Gemini"));
+          resolve(text);
+        } catch (e) { reject(e); }
+      });
+    });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
+function parseVerificationResult(text: string): { valid: boolean; reason: string } {
+  const match = text.match(/VALID:\s*(نعم|لا|yes|no)/i);
+  const reasonMatch = text.match(/REASON:\s*(.+)/i);
+  const reason = reasonMatch?.[1]?.trim() ?? text.trim();
+  if (!match) {
+    // إذا لم يُطابق التنسيق، نُفعّل لتجنب الرفض الخاطئ
+    return { valid: true, reason: "تم قبول الوصل" };
+  }
+  const valid = ["نعم", "yes"].includes(match[1].toLowerCase());
+  return { valid, reason };
+}
 
 const router: IRouter = Router();
 const db = new Database();
@@ -32,7 +193,7 @@ interface User {
   createdAt: string;
   activated: boolean;
   devices: DeviceInfo[];
-  receiptUploaded?: { size?: number; mime?: string; at: string };
+  receiptUploaded?: { size?: number; mime?: string; at: string; method?: string };
 }
 
 function userKey(username: string) {
@@ -130,7 +291,31 @@ router.post("/auth/activate", upload.single("receipt"), async (req, res) => {
       return res.status(400).json({ error: "يجب إرفاق صورة الوصل للتفعيل" });
     }
 
-    const receiptMeta = { size: req.file.size, mime: req.file.mimetype, at: new Date().toISOString() };
+    const paymentMethod = (req.body as Record<string, string>)["paymentMethod"] ?? "baridimob";
+
+    // ── التحقق بالذكاء الاصطناعي للـ CCP فقط ──────────────────────────
+    if (paymentMethod === "ccp") {
+      console.info(`[ACTIVATE-CCP] ${user.username} — جاري تحليل الوصل بالذكاء الاصطناعي...`);
+      const verification = await verifyCCPReceipt(req.file.buffer, req.file.mimetype);
+
+      if (!verification.valid) {
+        console.warn(`[ACTIVATE-CCP] ${user.username} — رُفض: ${verification.reason}`);
+        return res.status(400).json({
+          error: "لم يتم التعرف على الوصل كتأكيد دفع CCP صالح",
+          reason: verification.reason,
+          code: "INVALID_CCP_RECEIPT",
+        });
+      }
+
+      console.info(`[ACTIVATE-CCP] ${user.username} — مقبول: ${verification.reason}`);
+    }
+
+    const receiptMeta = {
+      size: req.file.size,
+      mime: req.file.mimetype,
+      at: new Date().toISOString(),
+      method: paymentMethod,
+    };
     const updatedUser: User = { ...user, activated: true, receiptUploaded: receiptMeta };
     await db.set(userKey(user.username), JSON.stringify(updatedUser));
 
@@ -140,7 +325,8 @@ router.post("/auth/activate", upload.single("receipt"), async (req, res) => {
       { expiresIn: "30d" }
     );
 
-    console.info(`[ACTIVATE] ${user.username} — وصل مرفوع (${req.file.size} bytes)`);
+    const methodLabel = paymentMethod === "ccp" ? "CCP" : "بريدي موب";
+    console.info(`[ACTIVATE] ${user.username} — ${methodLabel} — ${req.file.size} bytes`);
 
     return res.json({
       success: true,

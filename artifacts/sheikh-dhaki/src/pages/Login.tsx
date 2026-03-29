@@ -94,7 +94,9 @@ export default function Login() {
   const [tab, setTab] = useState<"login" | "register">("login");
   const [showPayment, setShowPayment] = useState(false);
   const [payStep, setPayStep] = useState<1 | 2>(1);
+  const [paymentMethod, setPaymentMethod] = useState<"baridimob" | "ccp">("baridimob");
   const [isUploading, setIsUploading] = useState(false);
+  const [ccpVerifying, setCcpVerifying] = useState(false);
   const [uploaded, setUploaded] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -185,26 +187,61 @@ export default function Login() {
       toast({ title: "سجّل الدخول أولاً", description: "أنشئ حساباً أو ادخل إلى حسابك ثم افتح نافذة التفعيل", variant: "destructive" });
       return;
     }
-    // تفعيل فوري — تحديث حالة المستخدم في الـ context فوراً
-    setUploaded(true);
-    if (user) updateUser(authToken, { ...user, activated: true });
-    toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
-    // إرسال الوصل للخادم في الخلفية وتحديث الـ token الرسمي
-    setIsUploading(true);
-    try {
-      const form = new FormData();
-      form.append("receipt", file);
-      const res = await fetch("/api/auth/activate", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${authToken}` },
-        body: form,
-      });
-      const data = await res.json();
-      if (res.ok) updateUser(data.token, data.user);
-    } catch {
-      // التفعيل المحلي مؤكد — الخادم سيُزامن عند الدخول التالي
-    } finally {
-      setIsUploading(false);
+
+    const form = new FormData();
+    form.append("receipt", file);
+    form.append("paymentMethod", paymentMethod);
+
+    if (paymentMethod === "baridimob") {
+      // بريدي موب — تفعيل فوري بدون انتظار
+      setUploaded(true);
+      if (user) updateUser(authToken, { ...user, activated: true });
+      toast({ title: "🎉 تم تفعيل حسابك!", description: "مبروك! يمكنك الآن الاستخدام غير المحدود." });
+      setIsUploading(true);
+      try {
+        const res = await fetch("/api/auth/activate", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${authToken}` },
+          body: form,
+        });
+        const data = await res.json();
+        if (res.ok) updateUser(data.token, data.user);
+      } catch {
+        // التفعيل المحلي مؤكد — الخادم سيُزامن لاحقاً
+      } finally {
+        setIsUploading(false);
+      }
+    } else {
+      // CCP — انتظار تحليل الذكاء الاصطناعي قبل التفعيل
+      setIsUploading(true);
+      setCcpVerifying(true);
+      try {
+        const res = await fetch("/api/auth/activate", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${authToken}` },
+          body: form,
+        });
+        const data = await res.json();
+        if (res.ok) {
+          updateUser(data.token, data.user);
+          setUploaded(true);
+          toast({ title: "🎉 تم تفعيل حسابك!", description: "تم التحقق من وصل CCP. مبروك!" });
+        } else if (data.code === "INVALID_CCP_RECEIPT") {
+          toast({
+            title: "الوصل غير صالح",
+            description: data.reason ?? "تأكد أن الصورة هي وصل تأكيد دفع CCP حقيقي من بريد الجزائر.",
+            variant: "destructive",
+            duration: 7000,
+          });
+        } else {
+          toast({ title: "خطأ في التفعيل", description: data.error ?? "حاول مجدداً", variant: "destructive" });
+        }
+      } catch {
+        toast({ title: "خطأ في الاتصال", description: "تأكد من اتصالك بالإنترنت وحاول مجدداً", variant: "destructive" });
+      } finally {
+        setIsUploading(false);
+        setCcpVerifying(false);
+      }
     }
   };
 
@@ -469,7 +506,7 @@ export default function Login() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
-            onClick={(e) => { if (e.target === e.currentTarget) { setShowPayment(false); setPayStep(1); setUploaded(false); } }}
+            onClick={(e) => { if (e.target === e.currentTarget) { setShowPayment(false); setPayStep(1); setUploaded(false); setPaymentMethod("baridimob"); } }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 12 }}
@@ -490,7 +527,7 @@ export default function Login() {
                     <span className="text-lg font-black" style={{ color: "#6366f1" }}>500 دج</span>
                   </div>
                   <button
-                    onClick={() => { setShowPayment(false); setPayStep(1); setUploaded(false); }}
+                    onClick={() => { setShowPayment(false); setPayStep(1); setUploaded(false); setPaymentMethod("baridimob"); }}
                     className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors text-lg leading-none"
                   >
                     ×
@@ -513,28 +550,65 @@ export default function Login() {
                 <AnimatePresence mode="wait">
                   {payStep === 1 && (
                     <motion.div key="pay1" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.15 }} className="space-y-3">
-                      <div className="bg-muted/50 rounded-2xl p-3.5 space-y-2.5">
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-muted-foreground">المبلغ</span>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs text-muted-foreground line-through">1000 دج</span>
-                            <span className="text-base font-black" style={{ color: "#16a34a" }}>500 دج</span>
+
+                      {/* ── اختيار طريقة الدفع ── */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {(["baridimob", "ccp"] as const).map((method) => {
+                          const isSel = paymentMethod === method;
+                          const label = method === "baridimob" ? "بريدي موب" : "CCP بريد الجزائر";
+                          const icon  = method === "baridimob" ? "📱" : "🏦";
+                          return (
+                            <button
+                              key={method}
+                              onClick={() => setPaymentMethod(method)}
+                              className="flex flex-col items-center gap-1 rounded-xl py-2.5 px-2 border-2 transition-all text-center"
+                              style={{
+                                borderColor: isSel ? "#6366f1" : "hsl(var(--border))",
+                                background:  isSel ? "rgba(99,102,241,0.10)" : "hsl(var(--muted)/0.4)",
+                                boxShadow:   isSel ? "0 0 0 3px rgba(99,102,241,0.15)" : "none",
+                              }}
+                            >
+                              <span className="text-lg leading-none">{icon}</span>
+                              <span className="text-xs font-bold" style={{ color: isSel ? "#6366f1" : "hsl(var(--muted-foreground))" }}>{label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* ── تفاصيل الطريقة ── */}
+                      <AnimatePresence mode="wait">
+                        <motion.div key={paymentMethod} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.12 }}>
+                          <div className="bg-muted/50 rounded-2xl p-3.5 space-y-2.5">
+                            <div className="flex justify-between items-center">
+                              <span className="text-xs text-muted-foreground">المبلغ</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-muted-foreground line-through">1000 دج</span>
+                                <span className="text-base font-black" style={{ color: "#16a34a" }}>500 دج</span>
+                              </div>
+                            </div>
+                            <div className="h-px bg-border" />
+                            {paymentMethod === "baridimob" ? (
+                              <div className="space-y-1.5">
+                                <span className="text-xs text-muted-foreground">رقم RIP — انقر للنسخ</span>
+                                <RIPCopyField rip="00799999002789880450" />
+                              </div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                <span className="text-xs text-muted-foreground">رقم CCP — انقر للنسخ</span>
+                                {/* ⚠ غيّر هذا الرقم برقم CCP الحقيقي */}
+                                <RIPCopyField rip="1234567890 / clé 89" />
+                              </div>
+                            )}
                           </div>
-                        </div>
-                        <div className="h-px bg-border" />
-                        <div className="flex justify-between items-center">
-                          <span className="text-xs text-muted-foreground">الطريقة</span>
-                          <span className="text-sm font-bold text-foreground">بريدي موب</span>
-                        </div>
-                        <div className="h-px bg-border" />
-                        <div className="space-y-1.5">
-                          <span className="text-xs text-muted-foreground">رقم RIP — انقر للنسخ</span>
-                          <RIPCopyField rip="00799999002789880450" />
-                        </div>
-                      </div>
-                      <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300/60 rounded-xl px-3 py-2 text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
-                        ادفع <strong>500 دج</strong> عبر بريدي موب، ثم ارفع وصل الدفع في الخطوة التالية ✨
-                      </div>
+                          <div className="mt-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-300/60 rounded-xl px-3 py-2 text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
+                            {paymentMethod === "baridimob"
+                              ? <>ادفع <strong>500 دج</strong> عبر بريدي موب على الرقم أعلاه، ثم ارفع وصل الدفع ✨</>
+                              : <>حوّل <strong>500 دج</strong> على رقم CCP أعلاه عبر البريد أو BaridiNet، ثم ارفع صورة تأكيد العملية 🏦 — سيتحقق الذكاء الاصطناعي من وصلك تلقائياً</>
+                            }
+                          </div>
+                        </motion.div>
+                      </AnimatePresence>
+
                       <button
                         onClick={() => setPayStep(2)}
                         className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm rounded-xl py-2.5 transition-all shadow-sm hover:-translate-y-px"
@@ -556,7 +630,7 @@ export default function Login() {
                             <p className="text-xs text-muted-foreground">يمكنك الآن الاستخدام غير المحدود</p>
                           </div>
                           <button
-                            onClick={() => { setShowPayment(false); setPayStep(1); setUploaded(false); setLocation("/"); }}
+                            onClick={() => { setShowPayment(false); setPayStep(1); setUploaded(false); setPaymentMethod("baridimob"); setLocation("/"); }}
                             className="w-full flex items-center justify-center gap-2 font-bold text-sm rounded-xl py-2.5 text-white transition-all hover:-translate-y-px"
                             style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", boxShadow: "0 4px 12px rgba(34,197,94,0.3)" }}
                           >
@@ -565,24 +639,40 @@ export default function Login() {
                         </div>
                       ) : (
                         <>
-                          <label className={`flex flex-col items-center gap-2.5 border-2 border-dashed rounded-2xl p-5 cursor-pointer transition-all ${isUploading ? "border-primary/40 bg-primary/5" : "border-border hover:border-primary/50 hover:bg-primary/4"}`}>
+                          {/* حالة تحليل الـ CCP */}
+                          {ccpVerifying && (
+                            <div className="flex flex-col items-center gap-2.5 py-3">
+                              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(99,102,241,0.12)", border: "2px solid rgba(99,102,241,0.3)" }}>
+                                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                              </div>
+                              <div className="text-center">
+                                <p className="text-sm font-bold text-foreground">جاري تحليل الوصل...</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">الذكاء الاصطناعي يتحقق من وصل CCP</p>
+                              </div>
+                            </div>
+                          )}
+                          <label className={`flex flex-col items-center gap-2.5 border-2 border-dashed rounded-2xl p-5 cursor-pointer transition-all ${isUploading ? "border-primary/40 bg-primary/5 pointer-events-none" : "border-border hover:border-primary/50 hover:bg-primary/4"}`}>
                             <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={isUploading} />
-                            {isUploading ? (
+                            {isUploading && !ccpVerifying ? (
                               <>
                                 <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                                 <span className="text-sm font-semibold text-primary">جاري الرفع...</span>
                               </>
-                            ) : (
+                            ) : !isUploading ? (
                               <>
                                 <div className="w-10 h-10 rounded-full bg-primary/8 border border-primary/20 flex items-center justify-center">
                                   <Upload className="w-4 h-4 text-primary" />
                                 </div>
                                 <div className="text-center">
                                   <p className="text-sm font-semibold text-foreground">اختر صورة الوصل</p>
-                                  <p className="text-xs text-muted-foreground mt-0.5">JPG, PNG · التفعيل فوري</p>
+                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                    {paymentMethod === "ccp"
+                                      ? "JPG, PNG · سيتحقق الذكاء الاصطناعي من الوصل 🔍"
+                                      : "JPG, PNG · التفعيل فوري ✨"}
+                                  </p>
                                 </div>
                               </>
-                            )}
+                            ) : null}
                           </label>
                           <button onClick={() => setPayStep(1)} className="w-full text-xs text-muted-foreground hover:text-foreground font-medium transition-colors">
                             → رجوع للخطوة السابقة
