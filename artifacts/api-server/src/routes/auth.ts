@@ -84,7 +84,7 @@ VALID: [نعم/لا] | REASON: [سبب موجز بالعربية]
 function callOpenRouterVision(apiKey: string, base64Image: string, mimeType: string, prompt: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const payload = JSON.stringify({
-      model: "google/gemini-2.5-flash-preview",
+      model: "google/gemini-2.5-flash",
       messages: [
         {
           role: "user",

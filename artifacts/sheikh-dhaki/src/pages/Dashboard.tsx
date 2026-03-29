@@ -637,7 +637,13 @@ export default function Dashboard() {
 
   const handleClearHistory = () => {
     if (confirm("هل أنت متأكد من مسح جميع التقييمات؟")) {
-      setHistory([]);
+      setHistory(prev => {
+        prev.forEach(item => {
+          if (item.exercisePreview) URL.revokeObjectURL(item.exercisePreview);
+          if (item.attemptPreview)  URL.revokeObjectURL(item.attemptPreview);
+        });
+        return [];
+      });
       toast({ title: "تم مسح السبورة بنجاح" });
     }
   };
