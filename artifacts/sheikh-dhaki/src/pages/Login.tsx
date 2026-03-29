@@ -498,184 +498,306 @@ export default function Login() {
         </div>
       </motion.div>
 
-      {/* Payment Modal */}
+      {/* ══════════════════ PAYMENT MODAL ══════════════════ */}
       <AnimatePresence>
         {showPayment && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50"
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+            style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)" }}
             onClick={(e) => { if (e.target === e.currentTarget) { setShowPayment(false); setPayStep(1); setUploaded(false); setPaymentMethod("baridimob"); } }}
           >
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 12 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 12 }}
-              transition={{ duration: 0.2 }}
-              className="bg-card border border-border rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden"
+              initial={{ opacity: 0, y: 60 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 60 }}
+              transition={{ type: "spring", stiffness: 340, damping: 32 }}
+              className="w-full max-w-sm overflow-hidden"
+              style={{
+                borderRadius: "28px 28px 0 0",
+                background: "hsl(var(--card))",
+                boxShadow: "0 -8px 60px rgba(0,0,0,0.35)",
+              }}
             >
-              {/* Modal Header */}
-              <div className="px-6 pt-5 pb-4 flex items-center justify-between border-b border-border">
-                <div>
-                  <h3 className="text-base font-black text-foreground">تفعيل النسخة الكاملة</h3>
-                  <p className="text-xs text-muted-foreground">عرض سنوي — وفّر 50٪</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="text-left">
-                    <span className="text-xs text-muted-foreground line-through block">1000 دج</span>
-                    <span className="text-lg font-black" style={{ color: "#6366f1" }}>500 دج</span>
+              {/* ── شريط السحب ── */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full" style={{ background: "hsl(var(--border))" }} />
+              </div>
+
+              {/* ── رأس متدرج ── */}
+              <div
+                className="relative mx-4 mb-4 rounded-2xl overflow-hidden p-5"
+                style={{
+                  background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 55%, #6d28d9 100%)",
+                }}
+              >
+                {/* نجوم خلفية */}
+                <div className="absolute inset-0 opacity-10" style={{
+                  backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)",
+                  backgroundSize: "22px 22px",
+                }} />
+
+                <div className="relative flex items-start justify-between">
+                  <div>
+                    <p className="text-white/70 text-xs font-medium mb-0.5">النسخة الكاملة — عرض 2026</p>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-black text-white leading-none">500</span>
+                      <span className="text-white/80 text-base font-bold">دج</span>
+                      <span className="text-white/40 text-xs line-through mt-auto mb-0.5">1000</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <div className="bg-white/20 rounded-full px-2 py-0.5 text-white text-xs font-bold">وفّر 50٪</div>
+                      <div className="bg-white/20 rounded-full px-2 py-0.5 text-white text-xs font-bold">تصحيحات غير محدودة</div>
+                    </div>
                   </div>
                   <button
                     onClick={() => { setShowPayment(false); setPayStep(1); setUploaded(false); setPaymentMethod("baridimob"); }}
-                    className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors text-lg leading-none"
+                    className="w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-110"
+                    style={{ background: "rgba(255,255,255,0.18)" }}
                   >
-                    ×
+                    <span className="text-white text-lg leading-none">×</span>
                   </button>
+                </div>
+
+                {/* progress bar */}
+                <div className="mt-4 flex gap-1.5">
+                  <div className="h-1 flex-1 rounded-full" style={{ background: "rgba(255,255,255,0.9)" }} />
+                  <div className="h-1 flex-1 rounded-full transition-all" style={{ background: payStep === 2 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.3)" }} />
+                </div>
+                <div className="mt-1 flex justify-between text-white/50 text-[10px]">
+                  <span>اختر طريقة الدفع</span>
+                  <span>ارفع الوصل</span>
                 </div>
               </div>
 
-              <div className="px-6 py-5 space-y-4">
-                {/* Steps */}
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition-all ${payStep === 1 ? "bg-primary text-primary-foreground" : "bg-green-500 text-white"}`}>
-                    {payStep > 1 ? <Check className="w-3.5 h-3.5" /> : "1"}
-                  </div>
-                  <div className="flex-1 h-px bg-border" />
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition-all ${payStep === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
-                    2
-                  </div>
-                </div>
-
+              {/* ── المحتوى ── */}
+              <div className="px-4 pb-6">
                 <AnimatePresence mode="wait">
-                  {payStep === 1 && (
-                    <motion.div key="pay1" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.15 }} className="space-y-3">
 
-                      {/* ── اختيار طريقة الدفع ── */}
-                      <div className="grid grid-cols-2 gap-2">
-                        {(["baridimob", "ccp"] as const).map((method) => {
-                          const isSel = paymentMethod === method;
-                          const label = method === "baridimob" ? "بريدي موب" : "CCP بريد الجزائر";
-                          const icon  = method === "baridimob" ? "📱" : "🏦";
+                  {/* ════ الخطوة 1 ════ */}
+                  {payStep === 1 && (
+                    <motion.div key="s1" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.18 }} className="space-y-3">
+
+                      {/* طرق الدفع */}
+                      <p className="text-xs text-muted-foreground font-semibold tracking-wide uppercase">طريقة الدفع</p>
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {([
+                          { id: "baridimob", label: "بريدي موب",        sub: "تفعيل فوري",          icon: "📱", color: "#f59e0b" },
+                          { id: "ccp",       label: "CCP بريد الجزائر", sub: "تحقق بالذكاء الاصطناعي", icon: "🏦", color: "#6366f1" },
+                        ] as const).map(({ id, label, sub, icon, color }) => {
+                          const sel = paymentMethod === id;
                           return (
                             <button
-                              key={method}
-                              onClick={() => setPaymentMethod(method)}
-                              className="flex flex-col items-center gap-1 rounded-xl py-2.5 px-2 border-2 transition-all text-center"
+                              key={id}
+                              onClick={() => setPaymentMethod(id)}
+                              className="relative flex flex-col gap-1.5 rounded-2xl p-3.5 text-right transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                               style={{
-                                borderColor: isSel ? "#6366f1" : "hsl(var(--border))",
-                                background:  isSel ? "rgba(99,102,241,0.10)" : "hsl(var(--muted)/0.4)",
-                                boxShadow:   isSel ? "0 0 0 3px rgba(99,102,241,0.15)" : "none",
+                                border: sel ? `2px solid ${color}` : "2px solid hsl(var(--border))",
+                                background: sel ? `${color}14` : "hsl(var(--muted)/0.5)",
+                                boxShadow: sel ? `0 0 0 3px ${color}22, 0 4px 16px ${color}1a` : "none",
                               }}
                             >
-                              <span className="text-lg leading-none">{icon}</span>
-                              <span className="text-xs font-bold" style={{ color: isSel ? "#6366f1" : "hsl(var(--muted-foreground))" }}>{label}</span>
+                              {sel && (
+                                <div
+                                  className="absolute top-2 left-2 w-4 h-4 rounded-full flex items-center justify-center"
+                                  style={{ background: color }}
+                                >
+                                  <Check className="w-2.5 h-2.5 text-white" />
+                                </div>
+                              )}
+                              <span className="text-2xl leading-none">{icon}</span>
+                              <span className="text-sm font-black text-foreground leading-tight">{label}</span>
+                              <span className="text-[10px] text-muted-foreground leading-tight">{sub}</span>
                             </button>
                           );
                         })}
                       </div>
 
-                      {/* ── تفاصيل الطريقة ── */}
+                      {/* تفاصيل الطريقة */}
                       <AnimatePresence mode="wait">
-                        <motion.div key={paymentMethod} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.12 }}>
-                          <div className="bg-muted/50 rounded-2xl p-3.5 space-y-2.5">
-                            <div className="flex justify-between items-center">
-                              <span className="text-xs text-muted-foreground">المبلغ</span>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-muted-foreground line-through">1000 دج</span>
-                                <span className="text-base font-black" style={{ color: "#16a34a" }}>500 دج</span>
+                        <motion.div key={paymentMethod} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.14 }}>
+                          <div
+                            className="rounded-2xl p-4 space-y-3"
+                            style={{ background: "hsl(var(--muted)/0.6)", border: "1px solid hsl(var(--border))" }}
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground">المبلغ المطلوب</span>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-xs text-muted-foreground line-through opacity-60">1000 دج</span>
+                                <span className="text-sm font-black" style={{ color: "#22c55e" }}>500 دج</span>
                               </div>
                             </div>
-                            <div className="h-px bg-border" />
-                            {paymentMethod === "baridimob" ? (
-                              <div className="space-y-1.5">
-                                <span className="text-xs text-muted-foreground">رقم RIP — انقر للنسخ</span>
-                                <RIPCopyField rip="00799999002789880450" />
-                              </div>
-                            ) : (
-                              <div className="space-y-1.5">
-                                <span className="text-xs text-muted-foreground">رقم CCP — انقر للنسخ</span>
-                                {/* ⚠ غيّر هذا الرقم برقم CCP الحقيقي */}
-                                <RIPCopyField rip="1234567890 / clé 89" />
-                              </div>
-                            )}
+                            <div className="h-px" style={{ background: "hsl(var(--border))" }} />
+                            <div className="space-y-1.5">
+                              <span className="text-xs text-muted-foreground">
+                                {paymentMethod === "baridimob" ? "رقم RIP — انقر للنسخ" : "رقم CCP — انقر للنسخ"}
+                              </span>
+                              <RIPCopyField rip={paymentMethod === "baridimob" ? "00799999002789880450" : "1234567890 / clé 89"} />
+                            </div>
                           </div>
-                          <div className="mt-2.5 bg-amber-50 dark:bg-amber-900/20 border border-amber-300/60 rounded-xl px-3 py-2 text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-medium">
-                            {paymentMethod === "baridimob"
-                              ? <>ادفع <strong>500 دج</strong> عبر بريدي موب على الرقم أعلاه، ثم ارفع وصل الدفع ✨</>
-                              : <>حوّل <strong>500 دج</strong> على رقم CCP أعلاه عبر البريد أو BaridiNet، ثم ارفع صورة تأكيد العملية 🏦 — سيتحقق الذكاء الاصطناعي من وصلك تلقائياً</>
-                            }
-                          </div>
+
+                          {paymentMethod === "ccp" && (
+                            <div
+                              className="mt-2.5 rounded-xl px-3.5 py-2.5 flex gap-2.5 items-start"
+                              style={{ background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.2)" }}
+                            >
+                              <span className="text-base mt-0.5">🤖</span>
+                              <p className="text-xs leading-relaxed" style={{ color: "#818cf8" }}>
+                                بعد الدفع، ارفع صورة تأكيد العملية وسيتحقق الذكاء الاصطناعي منها تلقائياً خلال ثوانٍ
+                              </p>
+                            </div>
+                          )}
                         </motion.div>
                       </AnimatePresence>
 
                       <button
                         onClick={() => setPayStep(2)}
-                        className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-primary-foreground font-bold text-sm rounded-xl py-2.5 transition-all shadow-sm hover:-translate-y-px"
+                        className="w-full flex items-center justify-center gap-2 font-black text-sm rounded-2xl py-3.5 text-white transition-all active:scale-[0.98]"
+                        style={{
+                          background: "linear-gradient(135deg, #4f46e5, #7c3aed)",
+                          boxShadow: "0 4px 18px rgba(99,102,241,0.40)",
+                        }}
                       >
                         دفعت؟ ارفع الوصل <ArrowLeft className="w-4 h-4" />
                       </button>
                     </motion.div>
                   )}
 
+                  {/* ════ الخطوة 2 ════ */}
                   {payStep === 2 && (
-                    <motion.div key="pay2" initial={{ opacity: 0, x: 8 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -8 }} transition={{ duration: 0.15 }} className="space-y-3">
+                    <motion.div key="s2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.18 }} className="space-y-3">
+
                       {uploaded ? (
-                        <div className="flex flex-col items-center gap-3 py-6">
-                          <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: "rgba(34,197,94,0.12)", border: "2px solid rgba(34,197,94,0.4)" }}>
-                            <CheckCircle2 className="w-7 h-7" style={{ color: "#22c55e" }} />
+                        /* ── نجاح ── */
+                        <motion.div
+                          initial={{ scale: 0.85, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ type: "spring", stiffness: 280, damping: 22 }}
+                          className="flex flex-col items-center gap-4 py-4"
+                        >
+                          <div
+                            className="w-20 h-20 rounded-full flex items-center justify-center"
+                            style={{
+                              background: "radial-gradient(circle, rgba(34,197,94,0.15) 0%, rgba(34,197,94,0.05) 100%)",
+                              border: "2.5px solid rgba(34,197,94,0.5)",
+                              boxShadow: "0 0 30px rgba(34,197,94,0.20)",
+                            }}
+                          >
+                            <CheckCircle2 className="w-10 h-10" style={{ color: "#22c55e" }} />
                           </div>
-                          <div className="text-center">
-                            <p className="text-base font-black text-foreground mb-0.5">🎉 تم تفعيل حسابك!</p>
-                            <p className="text-xs text-muted-foreground">يمكنك الآن الاستخدام غير المحدود</p>
+                          <div className="text-center space-y-1">
+                            <p className="text-xl font-black text-foreground">مبروك! 🎉</p>
+                            <p className="text-sm text-muted-foreground">حسابك مُفعَّل — تصحيحات غير محدودة</p>
                           </div>
                           <button
                             onClick={() => { setShowPayment(false); setPayStep(1); setUploaded(false); setPaymentMethod("baridimob"); setLocation("/"); }}
-                            className="w-full flex items-center justify-center gap-2 font-bold text-sm rounded-xl py-2.5 text-white transition-all hover:-translate-y-px"
-                            style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", boxShadow: "0 4px 12px rgba(34,197,94,0.3)" }}
+                            className="w-full flex items-center justify-center gap-2 font-black text-sm rounded-2xl py-3.5 text-white transition-all active:scale-[0.98]"
+                            style={{
+                              background: "linear-gradient(135deg, #16a34a, #22c55e)",
+                              boxShadow: "0 4px 18px rgba(34,197,94,0.35)",
+                            }}
                           >
                             <Zap className="w-4 h-4" /> انطلق للتطبيق
                           </button>
-                        </div>
-                      ) : (
-                        <>
-                          {/* حالة تحليل الـ CCP */}
-                          {ccpVerifying && (
-                            <div className="flex flex-col items-center gap-2.5 py-3">
-                              <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: "rgba(99,102,241,0.12)", border: "2px solid rgba(99,102,241,0.3)" }}>
-                                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                              </div>
-                              <div className="text-center">
-                                <p className="text-sm font-bold text-foreground">جاري تحليل الوصل...</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">الذكاء الاصطناعي يتحقق من وصل CCP</p>
-                              </div>
+                        </motion.div>
+                      ) : ccpVerifying ? (
+                        /* ── تحليل AI ── */
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="flex flex-col items-center gap-4 py-6"
+                        >
+                          <div className="relative w-20 h-20">
+                            {/* حلقة خارجية دوّارة */}
+                            <div
+                              className="absolute inset-0 rounded-full animate-spin"
+                              style={{ border: "2.5px solid transparent", borderTopColor: "#6366f1", borderRightColor: "#8b5cf6" }}
+                            />
+                            {/* حلقة داخلية عكسية */}
+                            <div
+                              className="absolute inset-2 rounded-full animate-spin"
+                              style={{ border: "2px solid transparent", borderTopColor: "#a78bfa", animationDirection: "reverse", animationDuration: "0.8s" }}
+                            />
+                            <div
+                              className="absolute inset-0 flex items-center justify-center rounded-full"
+                              style={{ background: "rgba(99,102,241,0.08)" }}
+                            >
+                              <span className="text-2xl">🤖</span>
                             </div>
-                          )}
-                          <label className={`flex flex-col items-center gap-2.5 border-2 border-dashed rounded-2xl p-5 cursor-pointer transition-all ${isUploading ? "border-primary/40 bg-primary/5 pointer-events-none" : "border-border hover:border-primary/50 hover:bg-primary/4"}`}>
+                          </div>
+                          <div className="text-center space-y-1">
+                            <p className="text-base font-black text-foreground">جاري تحليل الوصل</p>
+                            <p className="text-xs text-muted-foreground">الذكاء الاصطناعي يتحقق من وصل CCP...</p>
+                          </div>
+                          {/* نقاط متحركة */}
+                          <div className="flex gap-1.5">
+                            {[0, 1, 2].map((i) => (
+                              <motion.div
+                                key={i}
+                                className="w-2 h-2 rounded-full"
+                                style={{ background: "#6366f1" }}
+                                animate={{ opacity: [0.3, 1, 0.3], scale: [0.8, 1.2, 0.8] }}
+                                transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
+                              />
+                            ))}
+                          </div>
+                        </motion.div>
+                      ) : (
+                        /* ── رفع الوصل ── */
+                        <>
+                          <label
+                            className="group relative flex flex-col items-center gap-3 rounded-2xl p-6 cursor-pointer transition-all duration-200"
+                            style={{
+                              border: "2px dashed hsl(var(--border))",
+                              background: "hsl(var(--muted)/0.3)",
+                            }}
+                            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "#6366f1"; (e.currentTarget as HTMLElement).style.background = "rgba(99,102,241,0.04)"; }}
+                            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "hsl(var(--border))"; (e.currentTarget as HTMLElement).style.background = "hsl(var(--muted)/0.3)"; }}
+                          >
                             <input type="file" accept="image/*" className="hidden" onChange={handleUpload} disabled={isUploading} />
-                            {isUploading && !ccpVerifying ? (
-                              <>
-                                <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+
+                            {isUploading ? (
+                              <div className="flex flex-col items-center gap-2 py-2">
+                                <div className="w-10 h-10 rounded-full border-2 border-primary border-t-transparent animate-spin" />
                                 <span className="text-sm font-semibold text-primary">جاري الرفع...</span>
-                              </>
-                            ) : !isUploading ? (
+                              </div>
+                            ) : (
                               <>
-                                <div className="w-10 h-10 rounded-full bg-primary/8 border border-primary/20 flex items-center justify-center">
-                                  <Upload className="w-4 h-4 text-primary" />
+                                <div
+                                  className="w-14 h-14 rounded-2xl flex items-center justify-center transition-all group-hover:scale-110"
+                                  style={{
+                                    background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.10))",
+                                    border: "1.5px solid rgba(99,102,241,0.25)",
+                                  }}
+                                >
+                                  <Upload className="w-6 h-6" style={{ color: "#6366f1" }} />
                                 </div>
                                 <div className="text-center">
-                                  <p className="text-sm font-semibold text-foreground">اختر صورة الوصل</p>
-                                  <p className="text-xs text-muted-foreground mt-0.5">
+                                  <p className="text-sm font-bold text-foreground">اختر صورة الوصل</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
                                     {paymentMethod === "ccp"
-                                      ? "JPG, PNG · سيتحقق الذكاء الاصطناعي من الوصل 🔍"
-                                      : "JPG, PNG · التفعيل فوري ✨"}
+                                      ? "الذكاء الاصطناعي سيتحقق منها تلقائياً 🔍"
+                                      : "JPG أو PNG — التفعيل فوري ✨"}
                                   </p>
                                 </div>
+                                <div className="flex items-center gap-1.5 text-xs text-muted-foreground/60">
+                                  <div className="h-px w-8 bg-border" />
+                                  <span>أو اسحب الصورة هنا</span>
+                                  <div className="h-px w-8 bg-border" />
+                                </div>
                               </>
-                            ) : null}
+                            )}
                           </label>
-                          <button onClick={() => setPayStep(1)} className="w-full text-xs text-muted-foreground hover:text-foreground font-medium transition-colors">
-                            → رجوع للخطوة السابقة
+
+                          <button
+                            onClick={() => setPayStep(1)}
+                            className="w-full flex items-center justify-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-semibold transition-colors py-1"
+                          >
+                            <ArrowLeft className="w-3.5 h-3.5 rotate-180" />
+                            العودة لاختيار طريقة الدفع
                           </button>
                         </>
                       )}
