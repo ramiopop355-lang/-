@@ -114,8 +114,8 @@ Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHea
 - `paymentMethod`: `"baridimob"` | `"ccp"` (default: `"baridimob"`)
 - يُخزن في `receiptUploaded.method` في قاعدة البيانات
 
-### رقم CCP
-- الرقم الحالي في `Login.tsx` هو placeholder: `"1234567890 / clé 89"` — يجب استبداله برقم CCP الحقيقي
+### رقم RIP (مشترك بين بريدي موب و CCP)
+- `00799999002789880450` — نفس الرقم يُعرض لكلا طريقتَي الدفع في `Login.tsx` و `Dashboard.tsx`
 
 ### `scripts` (`@workspace/scripts`)
 

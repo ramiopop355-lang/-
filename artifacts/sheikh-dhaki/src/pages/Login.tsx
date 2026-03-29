@@ -633,9 +633,9 @@ export default function Login() {
                             <div className="h-px" style={{ background: "hsl(var(--border))" }} />
                             <div className="space-y-1.5">
                               <span className="text-xs text-muted-foreground">
-                                {paymentMethod === "baridimob" ? "رقم RIP — انقر للنسخ" : "رقم CCP — انقر للنسخ"}
+                                رقم RIP — انقر للنسخ
                               </span>
-                              <RIPCopyField rip={paymentMethod === "baridimob" ? "00799999002789880450" : "1234567890 / clé 89"} />
+                              <RIPCopyField rip="00799999002789880450" />
                             </div>
                           </div>
 
