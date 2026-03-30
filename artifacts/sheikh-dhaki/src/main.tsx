@@ -15,7 +15,7 @@ if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     const base = import.meta.env.BASE_URL || "/";
     navigator.serviceWorker
-      .register(`${base}progressier.js`)
+      .register(`${base}sw.js`)
       .catch(() => {});
   });
 }
