@@ -6,11 +6,13 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#0f0f1a",
   "theme_color": "#6366f1",
   "lang": "ar",
   "dir": "rtl",
+  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "categories": ["education", "productivity"],
   "prefer_related_applications": false,
   "related_applications": [],
@@ -18,6 +20,36 @@
   "widgets": [],
   "edge_side_panel": {},
   "note_taking": {},
+  "launch_handler": {
+    "client_mode": ["focus-existing", "auto"]
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+sigma",
+      "url": "/?sigma_action=%s"
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "GET",
+    "params": {
+      "title": "share_title",
+      "text": "share_text",
+      "url": "share_url"
+    }
+  },
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "image/jpeg": [".jpg", ".jpeg"],
+        "image/png": [".png"],
+        "image/webp": [".webp"]
+      },
+      "icons": [{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }],
+      "launch_type": "single-client"
+    }
+  ],
   "icons": [
     {
       "src": "/favicon.png",
