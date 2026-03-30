@@ -6,17 +6,12 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
   "orientation": "portrait",
   "background_color": "#0f0f1a",
   "theme_color": "#6366f1",
   "lang": "ar",
   "dir": "rtl",
-  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
-  "prefer_related_applications": false,
-  "related_applications": [],
   "categories": ["education", "productivity"],
-
   "icons": [
     {
       "src": "/favicon.png",
@@ -35,15 +30,8 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    },
-    {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
-      "purpose": "any"
     }
   ],
-
   "screenshots": [
     {
       "src": "/screenshot-narrow.jpg",
@@ -53,50 +41,13 @@
       "label": "سِيغْمَا على الجوال"
     }
   ],
-
   "shortcuts": [
     {
       "name": "تصحيح جديد",
       "short_name": "تصحيح",
-      "description": "ابدأ تمريناً جديداً للتصحيح",
       "url": "/",
       "icons": [{ "src": "/icon-512.png", "sizes": "512x512" }]
     }
   ],
-
-  "launch_handler": {
-    "client_mode": ["focus-existing", "auto"]
-  },
-
-  "privacy_policy_url": "https://sigmaaidzbac.replit.app/privacy",
-
-  "protocol_handlers": [
-    {
-      "protocol": "web+sigma",
-      "url": "/?sigma_action=%s"
-    }
-  ],
-
-  "file_handlers": [
-    {
-      "action": "/",
-      "accept": {
-        "image/jpeg": [".jpg", ".jpeg"],
-        "image/png":  [".png"],
-        "image/webp": [".webp"]
-      },
-      "icons": [{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }],
-      "launch_type": "single-client"
-    }
-  ],
-
-  "share_target": {
-    "action": "/",
-    "method": "GET",
-    "params": {
-      "title": "share_title",
-      "text":  "share_text",
-      "url":   "share_url"
-    }
-  }
+  "prefer_related_applications": false
 }
