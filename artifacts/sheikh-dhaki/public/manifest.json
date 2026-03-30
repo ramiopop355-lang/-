@@ -15,8 +15,16 @@
   "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7",
   "categories": ["education", "productivity"],
   "prefer_related_applications": false,
-  "related_applications": [],
-  "scope_extensions": [],
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=dz.bac.sigma",
+      "id": "dz.bac.sigma"
+    }
+  ],
+  "scope_extensions": [
+    { "origin": "https://sigmaaidzbac.replit.app" }
+  ],
   "note_taking": {
     "new_note_url": "/"
   },
@@ -26,6 +34,7 @@
   "widgets": [
     {
       "name": "سِيغْمَا",
+      "short_name": "سِيغْمَا Σ",
       "tag": "sigma-widget",
       "url": "/",
       "icons": [{ "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }],
