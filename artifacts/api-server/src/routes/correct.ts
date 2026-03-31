@@ -7,7 +7,11 @@ import Database from "@replit/database";
 import jwt from "jsonwebtoken";
 
 const db = new Database();
-const JWT_SECRET = process.env["JWT_SECRET"] ?? "ustad-riyad-2026-secret-key";
+
+// يجب أن تكون متغير البيئة موجوداً — نرفض التشغيل بدونه
+const JWT_SECRET = process.env["JWT_SECRET"];
+if (!JWT_SECRET) throw new Error("[STARTUP] JWT_SECRET environment variable is not set — server cannot start securely");
+
 const TRIAL_MAX  = 3;
 
 async function getTrialCount(key: string): Promise<number> {

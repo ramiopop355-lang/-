@@ -43,7 +43,7 @@ interface ReceiptData {
 interface VerificationResult {
   valid: boolean;
   reason: string;
-  code: "ACCEPTED" | "REJECTED" | "DUPLICATE_TXN" | "DUPLICATE_IMAGE" | "INSUFFICIENT_DATA" | "LOW_AMOUNT" | "FALLBACK_ACCEPTED";
+  code: "ACCEPTED" | "REJECTED" | "DUPLICATE_TXN" | "DUPLICATE_IMAGE" | "INSUFFICIENT_DATA" | "LOW_AMOUNT";
   data?: Partial<ReceiptData>;
 }
 
@@ -297,11 +297,14 @@ async function verifyPaymentReceipt(
     }
   }
 
-  // ── 3. إذا فشل كل شيء → قبول تلقائي احتياطي ──────────────────────
+  // ── 3. إذا فشل كل شيء → رفض مع رسالة واضحة ─────────────────────
   if (!rawText) {
-    console.error("[RECEIPT-OCR] كل المزودين فشلوا — قبول احتياطي");
-    await db.set(hashKey, JSON.stringify({ at: new Date().toISOString(), fallback: true }));
-    return { valid: true, reason: "تم القبول بسبب عطل مؤقت في التحقق", code: "FALLBACK_ACCEPTED" };
+    console.error("[RECEIPT-OCR] كل المزودين فشلوا — رفض الطلب");
+    return {
+      valid: false,
+      reason: "تعذّر التحقق من الوصل بسبب عطل مؤقت في الخدمة — حاول مجدداً خلال دقيقة",
+      code: "INSUFFICIENT_DATA",
+    };
   }
 
   const data = parseReceiptData(rawText);
@@ -355,7 +358,9 @@ const upload = multer({
   },
 });
 
-const JWT_SECRET = process.env["JWT_SECRET"] ?? "ustad-riyad-2026-secret-key";
+// يجب أن يكون متغير البيئة موجوداً — نرفض التشغيل بدونه
+const JWT_SECRET = process.env["JWT_SECRET"];
+if (!JWT_SECRET) throw new Error("[STARTUP] JWT_SECRET environment variable is not set — server cannot start securely");
 const SALT_ROUNDS = 10;
 const MAX_DEVICES = 3;
 
