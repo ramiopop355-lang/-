@@ -31,6 +31,56 @@ const TRIAL_KEY = "ustad-trial-used";
 const XP_KEY = "sigma-xp";
 const STREAK_KEY = "sigma-streak";
 
+// ── ضغط الصور قبل الرفع ─────────────────────────────────────────
+// الهدف: تقليص صور الهاتف (3-10 MB) إلى أقل من 1.2 MB
+const MAX_PX   = 1920;  // الحد الأقصى للبُعد الأطول (بكسل)
+const IMG_QUAL = 0.82;  // جودة JPEG (82٪ — توازن بين الجودة والحجم)
+const MAX_BYTES = 1.2 * 1024 * 1024; // 1.2 MB
+
+async function compressImage(file: File): Promise<File> {
+  // إذا كان الملف صغيراً أصلاً (< 1.2 MB) → لا حاجة لضغط
+  if (file.size <= MAX_BYTES) return file;
+
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let { width, height } = img;
+
+      // تصغير الأبعاد مع الحفاظ على نسبة العرض إلى الارتفاع
+      if (width > MAX_PX || height > MAX_PX) {
+        if (width >= height) {
+          height = Math.round((height * MAX_PX) / width);
+          width  = MAX_PX;
+        } else {
+          width  = Math.round((width * MAX_PX) / height);
+          height = MAX_PX;
+        }
+      }
+
+      const canvas = document.createElement("canvas");
+      canvas.width  = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { resolve(file); return; }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) { resolve(file); return; }
+          const compressed = new File([blob], file.name.replace(/\.[^.]+$/, ".jpg"), { type: "image/jpeg" });
+          resolve(compressed);
+        },
+        "image/jpeg",
+        IMG_QUAL
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("فشل تحميل الصورة")); };
+    img.src = url;
+  });
+}
+
 type ResultBlock = { grade: number | null; xpGain: number; streakGain: number; level: string; note: string };
 
 function parseResultBlock(text: string): ResultBlock | null {
@@ -725,9 +775,15 @@ export default function Dashboard() {
     let previewsStoredInHistory = false;
 
     try {
+      // ── ضغط الصور تلقائياً (صور الهاتف قد تصل 8MB — نُقلّصها لأقل من 1.2MB) ──
+      const [compressedExercise, compressedAttempt] = await Promise.all([
+        compressImage(exerciseFile).catch(() => exerciseFile),
+        attemptFile ? compressImage(attemptFile).catch(() => attemptFile) : Promise.resolve(null),
+      ]);
+
       const formData = new FormData();
-      formData.append("exercise", exerciseFile);
-      if (attemptFile) formData.append("attempt", attemptFile);
+      formData.append("exercise", compressedExercise);
+      if (compressedAttempt) formData.append("attempt", compressedAttempt);
       formData.append("shoba", selectedShoba);
       formData.append("notes", notes);
       formData.append("mode", solveMode ? "solve" : "correct");
@@ -741,15 +797,23 @@ export default function Dashboard() {
       });
 
       if (!response.ok) {
-        const err = await response.json().catch(() => ({ error: "خطأ غير معروف" }));
+        let err: { code?: string; error?: string } = {};
+        try {
+          err = await response.json();
+        } catch {
+          // الخادم أعاد ردّاً غير قابل للتحليل (HTML أو فارغ)
+          if (response.status === 413) throw new Error("الصورة كبيرة جداً — حاول مرة أخرى (سيتم ضغطها تلقائياً)");
+          if (response.status === 429) throw new Error("طلبات كثيرة — انتظر دقيقة ثم أعد المحاولة");
+          if (response.status === 503 || response.status === 502) throw new Error("الخادم مشغول — حاول مجدداً بعد لحظة");
+          throw new Error(`خطأ في الخادم (${response.status}) — حاول مجدداً`);
+        }
         if (err.code === "TRIAL_EXHAUSTED") {
-          // مزامنة العداد مع الخادم — نضع الحد الأقصى حتى لو كان الجهاز مختلفاً
           setTrialUsed(TRIAL_MAX);
           localStorage.setItem(TRIAL_KEY, String(TRIAL_MAX));
           setShowPayment(true);
           return;
         }
-        throw new Error(err.error || `خطأ: ${response.status}`);
+        throw new Error(err.error || `خطأ ${response.status} — حاول مجدداً`);
       }
 
       const reader = response.body?.getReader();
