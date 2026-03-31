@@ -655,15 +655,12 @@ router.post(
       const authHeader = req.headers["authorization"] ?? "";
       const rawToken   = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
       let isActivated  = false;
-      let trialDbKey   = `trial:device:${deviceId}`;
+      const trialDbKey = `trial:device:${deviceId}`;
 
       if (rawToken && rawToken !== "trial") {
         try {
           const payload = jwt.verify(rawToken, JWT_SECRET) as { username?: string; activated?: boolean };
           isActivated  = payload.activated === true;
-          if (!isActivated && payload.username) {
-            trialDbKey = `trial:user:${payload.username.toLowerCase().trim()}`;
-          }
         } catch {
           // رمز غير صالح — نُعامله كمستخدم تجريبي
         }
