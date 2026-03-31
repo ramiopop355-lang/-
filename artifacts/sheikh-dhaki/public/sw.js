@@ -1,4 +1,4 @@
-const CACHE = "sigma-v8";
+const CACHE = "sigma-v9";
 const PENDING_CACHE = "sigma-pending";
 const OFFLINE_URL = "/offline.html";
 
@@ -10,9 +10,11 @@ const PRECACHE = [
   "/favicon.svg",
   "/favicon.png",
   "/icon-512.png",
-  "/screenshot-narrow.jpg",
-  "/opengraph.jpg",
   "/icon-maskable.png",
+  "/screenshot-narrow.jpg",
+  "/screenshot-wide.jpg",
+  "/opengraph.jpg",
+  "/feature-graphic.png",
   "/.well-known/assetlinks.json",
 ];
 
