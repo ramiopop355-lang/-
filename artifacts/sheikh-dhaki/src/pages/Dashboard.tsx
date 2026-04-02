@@ -939,7 +939,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-x-hidden">
       <div className="flex flex-col md:flex-row flex-1 min-h-0 md:overflow-hidden" style={{ minHeight: "100dvh" }}>
       {/* SIDEBAR */}
-      <aside className="w-full md:w-80 lg:w-96 bg-card border-l border-border/60 flex flex-col shrink-0 overflow-y-auto max-h-[52vh] md:max-h-none" style={{ boxShadow: "4px 0 40px -8px hsl(var(--primary)/0.18), 0 0 0 1px hsl(var(--border)/0.8)", paddingBottom: "calc(1rem + var(--safe-bottom))" }}>
+      <aside className="w-full md:w-80 lg:w-96 bg-card border-l border-border/60 flex flex-col shrink-0 overflow-y-auto" style={{ boxShadow: "4px 0 40px -8px hsl(var(--primary)/0.18), 0 0 0 1px hsl(var(--border)/0.8)", paddingBottom: "calc(4rem + var(--safe-bottom))" }}>
         <div className="p-6 flex-1 flex flex-col gap-5">
           {/* Header */}
           <div
@@ -1539,21 +1539,21 @@ export default function Dashboard() {
             <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
               <span className="text-xs font-black text-white" style={{ fontFamily: "serif" }}>Σ</span>
             </div>
-            <span className="text-xs text-muted-foreground">سِيغْمَا © 2026 — جميع الحقوق محفوظة</span>
+            <span className="text-xs text-muted-foreground">SIGMA © 2026 — Tous droits réservés</span>
           </div>
           <span className="text-muted-foreground/40 text-xs hidden sm:inline">|</span>
           <a
             href="/privacy"
             className="text-xs text-muted-foreground hover:text-primary transition-colors"
           >
-            سياسة الخصوصية
+            Politique de confidentialité
           </a>
           <span className="text-muted-foreground/40 text-xs">|</span>
           <a
             href="/terms"
             className="text-xs text-muted-foreground hover:text-primary transition-colors"
           >
-            شروط الاستخدام
+            Conditions d'utilisation
           </a>
         </div>
       </footer>

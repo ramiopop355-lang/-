@@ -490,11 +490,11 @@ export default function Login() {
               <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0" style={{ background: "linear-gradient(135deg,#6366f1,#8b5cf6)" }}>
                 <span className="text-xs font-black text-white" style={{ fontFamily: "serif" }}>Σ</span>
               </div>
-              <p className="text-xs text-muted-foreground">سِيغْمَا © 2026</p>
+              <p className="text-xs text-muted-foreground">SIGMA © 2026</p>
               <span className="text-muted-foreground/40 text-xs">·</span>
-              <a href="/privacy" className="text-xs text-muted-foreground hover:text-primary transition-colors">خصوصية</a>
+              <a href="/privacy" className="text-xs text-muted-foreground hover:text-primary transition-colors">Confidentialité</a>
               <span className="text-muted-foreground/40 text-xs">·</span>
-              <a href="/terms" className="text-xs text-muted-foreground hover:text-primary transition-colors">شروط الاستخدام</a>
+              <a href="/terms" className="text-xs text-muted-foreground hover:text-primary transition-colors">Conditions d'utilisation</a>
             </div>
             <button
               onClick={toggle}
