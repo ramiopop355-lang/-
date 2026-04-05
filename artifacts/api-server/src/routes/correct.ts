@@ -652,31 +652,12 @@ router.post(
       }
 
       // ── التحقق من الاشتراك قبل فتح SSE ──────────────────────────────
+      // [OPEN_ACCESS] — كل المستخدمين مفعّلون مؤقتاً بدون قيود
       const authHeader = req.headers["authorization"] ?? "";
       const rawToken   = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
-      let isActivated  = false;
+      const isActivated  = true; // OPEN_ACCESS
       const trialDbKey = `trial:device:${deviceId}`;
-
-      if (rawToken && rawToken !== "trial") {
-        try {
-          const payload = jwt.verify(rawToken, JWT_SECRET) as { username?: string; activated?: boolean };
-          isActivated  = payload.activated === true;
-        } catch {
-          // رمز غير صالح — نُعامله كمستخدم تجريبي
-        }
-      }
-
-      let trialCount = 0;
-      if (!isActivated) {
-        trialCount = await getTrialCount(trialDbKey);
-        if (trialCount >= TRIAL_MAX) {
-          res.status(402).json({
-            error: "انتهت نسختك التجريبية — فعّل حسابك بـ 500 دج للاستمرار",
-            code: "TRIAL_EXHAUSTED",
-          });
-          return;
-        }
-      }
+      const trialCount = 0;
       // ────────────────────────────────────────────────────────────────
 
       const mode = (req.body.mode as string) || (attemptFile ? "correct" : "solve");
