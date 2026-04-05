@@ -16,12 +16,12 @@ function subKey(username: string) {
 }
 
 // إرجاع المفتاح العام لـ VAPID
-router.get("/api/push/vapid-public-key", (_req, res) => {
+router.get("/push/vapid-public-key", (_req, res) => {
   res.json({ key: process.env["VAPID_PUBLIC_KEY"] ?? "" });
 });
 
 // حفظ اشتراك الإشعارات
-router.post("/api/push/subscribe", async (req, res): Promise<void> => {
+router.post("/push/subscribe", async (req, res): Promise<void> => {
   const { username, subscription } = req.body as { username: string; subscription: webpush.PushSubscription };
   if (!username || !subscription) { res.status(400).json({ error: "missing fields" }); return; }
   await db.set(subKey(username), JSON.stringify(subscription));
@@ -29,7 +29,7 @@ router.post("/api/push/subscribe", async (req, res): Promise<void> => {
 });
 
 // إلغاء الاشتراك
-router.delete("/api/push/subscribe", async (req, res): Promise<void> => {
+router.delete("/push/subscribe", async (req, res): Promise<void> => {
   const { username } = req.body as { username: string };
   if (!username) { res.status(400).json({ error: "missing username" }); return; }
   await db.delete(subKey(username));

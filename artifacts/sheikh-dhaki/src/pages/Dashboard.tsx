@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useDarkModeToggle } from "@/hooks/use-dark-mode";
 import { differenceInDays } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -100,28 +101,6 @@ function parseResultBlock(text: string): ResultBlock | null {
     level:       lvlM   ? lvlM[1].trim()      : "",
     note:        noteM  ? noteM[1].trim()      : "",
   };
-}
-
-function useDarkModeToggle() {
-  const getInitial = () => {
-    const stored = localStorage.getItem("dhaki-dark");
-    if (stored !== null) return stored === "true";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  };
-  const [isDark, setIsDark] = useState(() => {
-    const d = getInitial();
-    document.documentElement.classList.toggle("dark", d);
-    return d;
-  });
-  const toggle = () => {
-    setIsDark((prev) => {
-      const next = !prev;
-      document.documentElement.classList.toggle("dark", next);
-      localStorage.setItem("dhaki-dark", String(next));
-      return next;
-    });
-  };
-  return { isDark, toggle };
 }
 
 const mdComponents: Components = {

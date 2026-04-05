@@ -8,28 +8,7 @@ import {
   Sparkles, Gift, Upload, CheckCircle2, Zap
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-function useDarkModeToggle() {
-  const getInitial = () => {
-    const stored = localStorage.getItem("dhaki-dark");
-    if (stored !== null) return stored === "true";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
-  };
-  const [isDark, setIsDark] = useState(() => {
-    const d = getInitial();
-    document.documentElement.classList.toggle("dark", d);
-    return d;
-  });
-  const toggle = () => {
-    setIsDark((prev) => {
-      const next = !prev;
-      document.documentElement.classList.toggle("dark", next);
-      localStorage.setItem("dhaki-dark", String(next));
-      return next;
-    });
-  };
-  return { isDark, toggle };
-}
+import { useDarkModeToggle } from "@/hooks/use-dark-mode";
 
 function RIPCopyField({ rip }: { rip: string }) {
   const [copied, setCopied] = useState(false);

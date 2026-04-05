@@ -57,7 +57,9 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 700,
+    target: "es2020",
+    cssMinify: true,
     rollupOptions: {
       output: {
         manualChunks: {
@@ -65,9 +67,13 @@ export default defineConfig({
           "vendor-motion":  ["framer-motion"],
           "vendor-math":    ["react-markdown", "remark-math", "rehype-katex", "katex"],
           "vendor-ui":      ["lucide-react", "@radix-ui/react-tooltip", "@tanstack/react-query"],
+          "vendor-router":  ["wouter"],
         },
       },
     },
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom", "framer-motion", "lucide-react"],
   },
   server: {
     port,
