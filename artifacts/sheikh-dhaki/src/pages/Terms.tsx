@@ -50,10 +50,11 @@ const SECTIONS = [
     ],
   },
   {
-    title: "7. التواصل",
+    title: "7. التواصل والاستفسارات",
     content: [
-      "لأي استفسار قانوني أو تقني: 📧 sigma.bac.dz@gmail.com",
+      "لأي استفسار قانوني أو تقني، يمكنك مراسلتنا عبر البريد الإلكتروني:",
     ],
+    email: "meradawajed@gmail.com",
   },
 ];
 
@@ -106,6 +107,17 @@ export default function Terms() {
                     <span>{renderContent(item)}</span>
                   </li>
                 ))}
+                {"email" in sec && sec.email && (
+                  <li className="text-sm leading-relaxed text-foreground/80 flex gap-2 mt-1">
+                    <span className="text-indigo-400 mt-0.5 shrink-0">📧</span>
+                    <a
+                      href={`mailto:${sec.email}`}
+                      className="text-indigo-400 hover:text-indigo-300 underline underline-offset-2 transition-colors font-medium"
+                    >
+                      {sec.email}
+                    </a>
+                  </li>
+                )}
               </ul>
             </section>
           ))}
