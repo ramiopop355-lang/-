@@ -48,12 +48,26 @@ const SECTIONS = [
     title: "6. التواصل والاستفسارات",
     content: [
       "لأي سؤال أو طلب متعلق بخصوصيتك، يمكنك التواصل معنا عبر البريد الإلكتروني:",
-      "📧 sigma.bac.dz@gmail.com",
+      "📧 meradawajed@gmail.com",
     ],
   },
 ];
 
 function renderContent(text: string) {
+  const emailMatch = text.match(/📧\s*([\w.+-]+@[\w-]+\.[\w.]+)/);
+  if (emailMatch) {
+    return (
+      <>
+        📧{" "}
+        <a
+          href={`mailto:${emailMatch[1]}`}
+          className="text-indigo-400 underline underline-offset-2 hover:text-indigo-300 transition-colors"
+        >
+          {emailMatch[1]}
+        </a>
+      </>
+    );
+  }
   const parts = text.split(/\*\*(.*?)\*\*/g);
   return parts.map((part, i) =>
     i % 2 === 1 ? <strong key={i} className="text-foreground">{part}</strong> : part
