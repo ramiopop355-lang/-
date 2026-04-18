@@ -1,0 +1,86 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "build-tools;34.0.0 platforms;android-34"
+
+      - name: Install Bubblewrap and expect
+        run: |
+          npm install -g @bubblewrap/cli
+          sudo apt-get install -y expect
+
+      - name: Generate signing keystore
+        run: |
+          keytool -genkey -v \
+            -keystore android.keystore \
+            -alias sigma-key \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass sigma2026 \
+            -keypass sigma2026 \
+            -dname "CN=Sigma Bac, OU=Education, O=Sigma, L=Algiers, ST=Algiers, C=DZ"
+
+      - name: Initialize TWA project
+        run: |
+          expect << 'EOF'
+            set timeout 120
+            spawn bubblewrap init --manifest https://sigmaaidzbac.replit.app/manifest.json
+            expect -re ".*" { send "\r" }
+            expect eof
+          EOF
+        continue-on-error: true
+
+      - name: Build TWA
+        run: |
+          expect << 'EOF'
+            set timeout 300
+            spawn bubblewrap build
+            expect "Store password*" { send "sigma2026\r" }
+            expect "Key password*"   { send "sigma2026\r" }
+            expect eof
+          EOF
+
+      - name: Show SHA-256 fingerprint
+        run: |
+          echo "======================================="
+          echo "      SHA-256 FINGERPRINT BELOW        "
+          echo "======================================="
+          keytool -list -v \
+            -keystore android.keystore \
+            -alias sigma-key \
+            -storepass sigma2026 2>/dev/null | grep "SHA256"
+          echo "======================================="
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: sigma-android-release
+          path: |
+            app-release-bundle.aab
+            app-release.apk
+            android.keystore
+          if-no-files-found: warn
