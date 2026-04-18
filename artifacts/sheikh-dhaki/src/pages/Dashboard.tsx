@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useDarkModeToggle } from "@/hooks/use-dark-mode";
-import { differenceInDays } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles, Trash2, CalendarDays, Upload, ChevronDown,
   Image as ImageIcon, XCircle, LogOut, MessageSquare, Moon, Sun, Copy, Check,
-  FileText, PenLine, CheckCircle2, Zap, ShieldCheck
+  FileText, PenLine, CheckCircle2, Zap, ShieldCheck, Share2
 } from "lucide-react";
 import { useAuth, getDeviceId } from "@/context/AuthContext";
 import { useLocation } from "wouter";
@@ -528,7 +527,24 @@ export default function Dashboard() {
   const rafRef = useRef<number | null>(null);
   const pendingTextRef = useRef<string>("");
   const { isDark, toggle } = useDarkModeToggle();
-  const daysLeft = Math.max(0, differenceInDays(BAC_DATE, new Date()));
+  const calcCountdown = () => {
+    const now = new Date();
+    const diff = BAC_DATE.getTime() - now.getTime();
+    if (diff <= 0) return { d: 0, h: 0, m: 0, s: 0 };
+    const totalSecs = Math.floor(diff / 1000);
+    return {
+      d: Math.floor(totalSecs / 86400),
+      h: Math.floor((totalSecs % 86400) / 3600),
+      m: Math.floor((totalSecs % 3600) / 60),
+      s: totalSecs % 60,
+    };
+  };
+  const [countdown, setCountdown] = useState(calcCountdown);
+  useEffect(() => {
+    const id = setInterval(() => setCountdown(calcCountdown()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const daysLeft = countdown.d;
   const trialRemaining = Math.max(0, TRIAL_MAX - trialUsed);
   const isActivated = user?.activated === true;
   const trialExpired = !isActivated && trialUsed >= TRIAL_MAX;
@@ -966,29 +982,66 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Countdown */}
+          {/* ── عداد البكالوريا ─────────────────────────────────────── */}
           <div
             className="rounded-2xl p-4"
             style={{
-              background: "linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.06) 60%, rgba(5,150,105,0.04) 100%)",
-              border: "1px solid rgba(34,197,94,0.22)",
-              boxShadow: "0 4px 20px -6px rgba(34,197,94,0.20), inset 0 1px 0 rgba(255,255,255,0.10)",
+              background: "linear-gradient(135deg, #3b5bdb 0%, #4c6ef5 60%, #748ffc 100%)",
+              boxShadow: "0 8px 32px -8px rgba(59,91,219,0.55)",
             }}
           >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-[10px] font-semibold text-green-700 dark:text-green-400 uppercase tracking-wider mb-1">باقي للبكالوريا 2026</p>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-5xl font-black text-green-600 dark:text-green-400 leading-none tabular-nums">{daysLeft}</span>
-                  <span className="text-sm font-bold text-green-600/70 dark:text-green-400/70">يوم</span>
-                </div>
-              </div>
-              <div
-                className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: "rgba(34,197,94,0.15)", border: "1px solid rgba(34,197,94,0.25)" }}
+            {/* رأس العداد */}
+            <div className="flex items-center justify-between mb-3">
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({ title: "سِيغْمَا — مصحح الباك", text: `باقي ${daysLeft} يوم للبكالوريا! جرب التطبيق 👇`, url: window.location.origin });
+                  } else {
+                    navigator.clipboard.writeText(window.location.origin);
+                    toast({ title: "تم نسخ الرابط", description: window.location.origin });
+                  }
+                }}
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-white/20 hover:bg-white/30 transition-colors"
+                aria-label="مشاركة"
               >
-                <CalendarDays className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <Share2 className="w-4 h-4 text-white" />
+              </button>
+              <div className="flex items-center gap-2">
+                <span className="text-white font-bold text-sm">العد التنازلي للبكالوريا</span>
+                <span className="text-lg">🕐</span>
               </div>
+            </div>
+
+            {/* مربعات الأرقام */}
+            <div className="grid grid-cols-4 gap-2 mb-3">
+              {[
+                { label: "يوم", value: countdown.d },
+                { label: "ساعة", value: countdown.h },
+                { label: "دقيقة", value: countdown.m },
+                { label: "ثانية", value: countdown.s },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex flex-col items-center">
+                  <div
+                    className="w-full rounded-xl flex items-center justify-center py-2.5"
+                    style={{ background: "rgba(255,255,255,0.18)", backdropFilter: "blur(4px)" }}
+                  >
+                    <span className="text-2xl font-black text-white tabular-nums leading-none">
+                      {String(value).padStart(2, "0")}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-white/80 mt-1 font-medium">{label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* شريط التشجيع */}
+            <div
+              className="rounded-xl px-3 py-2 flex items-center justify-center gap-2"
+              style={{ background: "rgba(255,255,255,0.15)" }}
+            >
+              <span className="text-[12px] text-white font-semibold text-center">
+                🏆 باقي {daysLeft} يوم — كل يوم يقربك من النجاح!
+              </span>
             </div>
           </div>
 
