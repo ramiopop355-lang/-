@@ -316,22 +316,25 @@ function XpStreakWidget({ xp, streak }: { xp: number; streak: number }) {
     return () => clearInterval(timer);
   }, [xp]);
   return (
-    <div className="rounded-2xl border border-green-400/30 dark:border-green-600/30 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/15 p-4 flex items-center gap-4">
+    <div
+      className="rounded-2xl p-4 flex items-center gap-4"
+      style={{
+        background: "linear-gradient(135deg, #059669 0%, #10b981 60%, #34d399 100%)",
+        boxShadow: "0 8px 32px -8px rgba(5,150,105,0.55)",
+      }}
+    >
       <div className="flex-1 text-center">
-        <p className="text-[10px] font-semibold text-green-700 dark:text-green-400 uppercase tracking-wider mb-1">نقاط XP</p>
-        <p
-          className="text-3xl font-black text-green-600 dark:text-green-400 leading-none transition-all"
-          style={{ textShadow: "0 0 20px rgba(34,197,94,0.4)" }}
-        >
+        <p className="text-[10px] font-semibold text-white/75 uppercase tracking-wider mb-1">نقاط XP</p>
+        <p className="text-3xl font-black text-white leading-none transition-all tabular-nums">
           {displayed.toLocaleString("ar-DZ")}
         </p>
       </div>
-      <div className="w-px h-10 bg-green-300/40 dark:bg-green-700/30" />
+      <div className="w-px h-10 bg-white/30" />
       <div className="flex-1 text-center">
-        <p className="text-[10px] font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wider mb-1">الاستمرارية</p>
+        <p className="text-[10px] font-semibold text-white/75 uppercase tracking-wider mb-1">الاستمرارية</p>
         <div className="flex items-center justify-center gap-1">
           <span className="text-xl">{streak > 0 ? "🔥" : "💤"}</span>
-          <span className="text-2xl font-black text-orange-600 dark:text-orange-400 leading-none">{streak}</span>
+          <span className="text-2xl font-black text-white leading-none tabular-nums">{streak}</span>
         </div>
       </div>
     </div>
@@ -1053,59 +1056,57 @@ export default function Dashboard() {
             <div
               className="rounded-2xl px-4 py-3 flex items-center gap-3"
               style={{
-                background: "linear-gradient(135deg, rgba(99,102,241,0.12) 0%, rgba(139,92,246,0.06) 100%)",
-                border: "1.5px solid rgba(99,102,241,0.40)",
-                boxShadow: "0 2px 8px rgba(99,102,241,0.10)",
+                background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 60%, #a78bfa 100%)",
+                boxShadow: "0 8px 32px -8px rgba(99,102,241,0.55)",
               }}
             >
-              <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(99,102,241,0.15)" }}>
-                <ShieldCheck className="w-4 h-4" style={{ color: "#6366f1" }} />
+              <div className="w-9 h-9 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.20)" }}>
+                <ShieldCheck className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-xs font-black leading-tight" style={{ color: "#6366f1" }}>حساب مفعّل ✨</p>
-                <p className="text-xs leading-tight text-muted-foreground">تصحيحات غير محدودة — سنة كاملة</p>
+                <p className="text-sm font-black text-white leading-tight">حساب مفعّل ✨</p>
+                <p className="text-xs text-white/75 leading-tight">تصحيحات غير محدودة — سنة كاملة</p>
               </div>
             </div>
           ) : !trialExpired ? (
             <div
               className="rounded-2xl px-4 py-3 space-y-2.5"
               style={{
-                background: "linear-gradient(135deg, rgba(34,197,94,0.12) 0%, rgba(16,185,129,0.06) 100%)",
-                border: "2px solid rgba(34,197,94,0.45)",
-                boxShadow: "0 2px 8px rgba(34,197,94,0.12)",
+                background: "linear-gradient(135deg, #16a34a 0%, #22c55e 60%, #4ade80 100%)",
+                boxShadow: "0 8px 32px -8px rgba(22,163,74,0.55)",
               }}
             >
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(34,197,94,0.18)", border: "1px solid rgba(34,197,94,0.4)" }}>
-                  <span className="text-sm">🎁</span>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.20)" }}>
+                  <span className="text-base">🎁</span>
                 </div>
                 <div>
-                  <p className="text-xs font-black leading-tight" style={{ color: "#16a34a" }}>نسخة تجريبية مجانية</p>
-                  <p className="text-xs leading-tight" style={{ color: "rgba(22,163,74,0.75)" }}>
-                    باقي <span className="font-black" style={{ color: "#16a34a" }}>{trialRemaining}</span> من {TRIAL_MAX} استخدامات
+                  <p className="text-sm font-black text-white leading-tight">نسخة تجريبية مجانية</p>
+                  <p className="text-xs text-white/80 leading-tight">
+                    باقي <span className="font-black">{trialRemaining}</span> من {TRIAL_MAX} استخدامات
                   </p>
                 </div>
                 <button
                   onClick={() => setShowPayment(true)}
                   className="mr-auto text-xs font-bold px-2.5 py-1 rounded-lg transition-all hover:-translate-y-px"
-                  style={{ background: "rgba(99,102,241,0.12)", color: "#6366f1", border: "1px solid rgba(99,102,241,0.25)" }}
+                  style={{ background: "rgba(255,255,255,0.25)", color: "#fff", border: "1px solid rgba(255,255,255,0.35)" }}
                 >
                   فعّل ↑
                 </button>
               </div>
               <div className="flex items-center gap-1.5">
                 {Array.from({ length: TRIAL_MAX }).map((_, i) => (
-                  <div key={i} className="flex-1 h-2.5 rounded-full overflow-hidden" style={{ background: "rgba(34,197,94,0.18)" }}>
+                  <div key={i} className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.25)" }}>
                     <div
-                      className="h-full w-full rounded-full transition-all duration-300"
+                      className="h-full w-full rounded-full"
                       style={i < trialUsed
-                        ? { background: "#ef4444", boxShadow: "0 0 6px rgba(239,68,68,0.7)" }
-                        : { background: "#22c55e", boxShadow: "0 0 6px rgba(34,197,94,0.7)" }}
+                        ? { background: "rgba(239,68,68,0.9)" }
+                        : { background: "rgba(255,255,255,0.6)" }}
                     />
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-center" style={{ color: "rgba(22,163,74,0.65)" }}>
+              <p className="text-xs text-center text-white/80">
                 {trialUsed === 0 ? "استمتع بـ 3 تصحيحات مجانية 🎉" : `استعملت ${trialUsed} من ${TRIAL_MAX} — باقي ${trialRemaining}`}
               </p>
             </div>
@@ -1113,34 +1114,33 @@ export default function Dashboard() {
             <div
               className="rounded-2xl px-4 py-3.5 space-y-2.5"
               style={{
-                background: "linear-gradient(135deg, rgba(239,68,68,0.13) 0%, rgba(225,29,72,0.07) 100%)",
-                border: "2px solid rgba(239,68,68,0.5)",
-                boxShadow: "0 2px 10px rgba(239,68,68,0.15)",
+                background: "linear-gradient(135deg, #dc2626 0%, #ef4444 60%, #f87171 100%)",
+                boxShadow: "0 8px 32px -8px rgba(220,38,38,0.55)",
               }}
             >
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(239,68,68,0.18)", border: "1px solid rgba(239,68,68,0.4)" }}>
-                  <span className="text-sm">🔒</span>
+                <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ background: "rgba(255,255,255,0.20)" }}>
+                  <span className="text-base">🔒</span>
                 </div>
                 <div>
-                  <p className="text-xs font-black leading-tight" style={{ color: "#dc2626" }}>انتهت النسخة التجريبية</p>
-                  <p className="text-xs leading-tight" style={{ color: "rgba(220,38,38,0.70)" }}>لقد استنفدت الـ {TRIAL_MAX} تصحيحات المجانية</p>
+                  <p className="text-sm font-black text-white leading-tight">انتهت النسخة التجريبية</p>
+                  <p className="text-xs text-white/80 leading-tight">استنفدت الـ {TRIAL_MAX} تصحيحات المجانية</p>
                 </div>
               </div>
               <div className="flex gap-1.5">
                 {Array.from({ length: TRIAL_MAX }).map((_, i) => (
-                  <div key={i} className="flex-1 h-2.5 rounded-full" style={{ background: "#ef4444", boxShadow: "0 0 6px rgba(239,68,68,0.55)" }} />
+                  <div key={i} className="flex-1 h-2 rounded-full" style={{ background: "rgba(255,255,255,0.35)" }} />
                 ))}
               </div>
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground line-through">1000 دج</span>
-                  <span className="font-black" style={{ color: "#6366f1" }}>500 دج — عرض سنوي</span>
+                  <span className="text-white/60 line-through">1000 دج</span>
+                  <span className="font-black text-white">500 دج — عرض سنوي</span>
                 </div>
                 <button
                   onClick={() => setShowPayment(true)}
                   className="w-full text-xs font-black text-white rounded-xl py-2 transition-all duration-150 hover:-translate-y-px"
-                  style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)", boxShadow: "0 3px 10px rgba(99,102,241,0.35)" }}
+                  style={{ background: "rgba(255,255,255,0.22)", border: "1px solid rgba(255,255,255,0.35)" }}
                 >
                   🔓 فعّل الآن بـ 500 دج
                 </button>
@@ -1224,17 +1224,28 @@ export default function Dashboard() {
           )}
 
           {/* Notes */}
-          <div className="rounded-2xl border border-amber-300/60 dark:border-amber-500/30 bg-gradient-to-br from-amber-50/80 to-yellow-50/50 dark:from-amber-900/15 dark:to-yellow-900/10 p-3.5 space-y-2 shadow-sm shadow-amber-100/60 dark:shadow-amber-900/10">
+          <div
+            className="rounded-2xl p-3.5 space-y-2"
+            style={{
+              background: "linear-gradient(135deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%)",
+              boxShadow: "0 8px 32px -8px rgba(217,119,6,0.50)",
+            }}
+          >
             <div className="flex items-center gap-2">
               <span className="text-base">💬</span>
-              <label className="text-xs font-semibold text-green-700 dark:text-green-400">قل للأستاذ</label>
-              <span className="text-xs text-amber-600/60 dark:text-amber-500/50 mr-auto">اختياري</span>
+              <label className="text-sm font-bold text-white">قل للأستاذ</label>
+              <span className="text-xs text-white/65 mr-auto">اختياري</span>
             </div>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="مثلاً: ما فهمتش السؤال الثاني..."
-              className="w-full bg-white/70 dark:bg-black/20 border border-amber-200/80 dark:border-amber-700/30 focus:border-amber-400 dark:focus:border-amber-500 rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-amber-300/30 dark:focus:ring-amber-500/20 transition-all resize-none min-h-[60px] placeholder:text-amber-400/60 dark:placeholder:text-amber-600/50"
+              className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none transition-all resize-none min-h-[60px] placeholder:text-white/55"
+              style={{
+                background: "rgba(255,255,255,0.20)",
+                color: "#fff",
+                border: "1px solid rgba(255,255,255,0.30)",
+              }}
             />
           </div>
 
