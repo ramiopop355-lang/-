@@ -2,6 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const isReplit = !!process.env["REPL_ID"];
 const port = Number(process.env["PORT"] ?? 5173);
@@ -17,7 +20,7 @@ if (isReplit && process.env["NODE_ENV"] !== "production") {
 
   try {
     const { cartographer } = await import("@replit/vite-plugin-cartographer");
-    replitPlugins.push(cartographer({ root: path.resolve(import.meta.dirname, "..") }) as ReturnType<typeof react>);
+    replitPlugins.push(cartographer({ root: path.resolve(__dirname, "..") }) as ReturnType<typeof react>);
   } catch { /* not available outside Replit */ }
 
   try {
@@ -35,14 +38,14 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
-      "@assets": path.resolve(import.meta.dirname, "..", "..", "attached_assets"),
+      "@": path.resolve(__dirname, "src"),
+      "@assets": path.resolve(__dirname, "..", "..", "attached_assets"),
     },
     dedupe: ["react", "react-dom"],
   },
-  root: path.resolve(import.meta.dirname),
+  root: __dirname,
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,
     chunkSizeWarningLimit: 700,
     target: "es2020",
