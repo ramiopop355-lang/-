@@ -1283,27 +1283,21 @@ export default function Dashboard() {
           )}
 
           {/* Notes */}
-          <div
-            className="rounded-2xl p-3.5 space-y-2"
-            style={{
-              background: "linear-gradient(135deg, #d97706 0%, #f59e0b 60%, #fbbf24 100%)",
-              boxShadow: "0 8px 32px -8px rgba(217,119,6,0.50)",
-            }}
-          >
-            <div className="flex items-center gap-2">
-              <span className="text-base">💬</span>
-              <label className="text-sm font-bold text-white">قل للأستاذ</label>
-              <span className="text-xs text-white/65 mr-auto">اختياري</span>
-            </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300">
+              <MessageSquare className="w-3.5 h-3.5" />
+              قل للأستاذ
+              <span className="text-[11px] text-muted-foreground font-normal mr-auto">اختياري</span>
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="مثلاً: ما فهمتش السؤال الثاني..."
-              className="w-full rounded-xl px-3.5 py-2.5 text-sm focus:outline-none transition-all resize-none min-h-[60px] placeholder:text-white/55"
+              className="w-full rounded-2xl px-4 py-3 text-sm focus:outline-none transition-all resize-none min-h-[70px] placeholder:text-muted-foreground/60 text-foreground"
               style={{
-                background: "rgba(255,255,255,0.20)",
-                color: "#fff",
-                border: "1px solid rgba(255,255,255,0.30)",
+                background: "linear-gradient(135deg, rgba(99,102,241,0.06), rgba(79,70,229,0.03))",
+                border: "2px dashed rgba(99,102,241,0.35)",
+                boxShadow: "inset 0 0 0 1px rgba(99,102,241,0.18)",
               }}
             />
           </div>
@@ -1352,46 +1346,19 @@ export default function Dashboard() {
         background: "linear-gradient(135deg, hsl(var(--muted)/0.4), hsl(var(--background)))",
       }}>
         <div className="max-w-3xl mx-auto">
-          {/* Themed chalkboard heading */}
-          <div
-            className="mb-6 rounded-2xl p-2.5 flex items-center justify-between gap-3"
-            style={{
-              background: "linear-gradient(135deg, #4338ca 0%, #6366f1 25%, #8b5cf6 50%, #6366f1 75%, #4338ca 100%)",
-              boxShadow: "0 6px 24px -8px rgba(99,102,241,0.55), inset 0 1px 0 rgba(255,255,255,0.20), inset 0 -2px 0 rgba(0,0,0,0.20)",
-            }}
-          >
-            <div
-              className="flex-1 rounded-xl px-5 py-3 flex items-center gap-3"
-              style={{
-                background: "linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--muted)/0.6) 100%)",
-                boxShadow: "inset 0 2px 6px rgba(0,0,0,0.10), inset 0 -1px 0 rgba(255,255,255,0.04)",
-                border: "1px solid hsl(var(--border)/0.6)",
-              }}
-            >
-              <Sparkles className="w-5 h-5" style={{ color: "#6366f1" }} />
-              <h1
-                className="text-lg sm:text-xl font-black tracking-tight"
-                style={{
-                  background: "linear-gradient(135deg, #6366f1 20%, #8b5cf6 60%, #c026d3 100%)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                }}
-              >
-                السبورة الإلكترونية
-              </h1>
-            </div>
+          {/* Heading */}
+          <div className="flex items-center justify-between mb-6">
+            <h1
+              className="text-xl font-black"
+              style={{ background: "linear-gradient(135deg, hsl(var(--foreground)) 30%, hsl(var(--primary)))", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+            >السبورة الإلكترونية</h1>
             {history.length > 0 && (
               <button
                 onClick={handleClearHistory}
-                className="flex items-center gap-1.5 text-xs font-bold text-white hover:bg-white/20 px-3 py-2 rounded-lg transition-all"
-                style={{
-                  background: "rgba(255,255,255,0.12)",
-                  border: "1px solid rgba(255,255,255,0.20)",
-                }}
-                title="مسح كل السجلّ"
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">مسح</span>
+                مسح الكل
               </button>
             )}
           </div>
@@ -1451,38 +1418,23 @@ export default function Dashboard() {
 
           {/* History */}
           {!streamingText && history.length === 0 ? (
-            <div
-              className="relative rounded-2xl overflow-hidden p-2.5"
-              style={{
-                background: "linear-gradient(135deg, #4338ca 0%, #6366f1 25%, #8b5cf6 50%, #6366f1 75%, #4338ca 100%)",
-                boxShadow: "0 12px 32px -12px rgba(99,102,241,0.45), inset 0 1px 0 rgba(255,255,255,0.20)",
-              }}
-            >
+            <div className="flex flex-col items-center justify-center py-24 text-center">
               <div
-                className="relative rounded-xl py-16 px-6 flex flex-col items-center text-center overflow-hidden"
+                className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5"
                 style={{
-                  background: "linear-gradient(180deg, hsl(var(--card)) 0%, hsl(var(--muted)/0.5) 100%)",
-                  boxShadow: "inset 0 2px 8px rgba(0,0,0,0.06)",
-                  border: "1px solid hsl(var(--border)/0.5)",
+                  background: "linear-gradient(135deg, rgba(99,102,241,0.14), rgba(139,92,246,0.07))",
+                  border: "1.5px solid rgba(99,102,241,0.18)",
+                  boxShadow: "0 0 40px -8px rgba(99,102,241,0.30), 0 4px 16px -4px rgba(99,102,241,0.15)",
                 }}
               >
-                <div
-                  className="w-20 h-20 rounded-2xl flex items-center justify-center mb-5"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(99,102,241,0.14), rgba(139,92,246,0.07))",
-                    border: "1.5px solid rgba(99,102,241,0.20)",
-                    boxShadow: "0 0 40px -8px rgba(99,102,241,0.30), 0 4px 16px -4px rgba(99,102,241,0.15)",
-                  }}
-                >
-                  <MessageSquare className="w-10 h-10" style={{ color: "rgba(99,102,241,0.65)" }} />
-                </div>
-                <h3 className="text-base font-black text-foreground mb-2">السبورة فارغة</h3>
-                <p className="text-sm text-muted-foreground max-w-xs">
-                  {solveMode
-                    ? "ارفع صورة التمرين وسيبني سِيغْمَا الحل الكامل لك فوراً"
-                    : "ارفع صورة التمرين وصورة محاولتك وسيقيّم سِيغْمَا إجابتك فوراً"}
-                </p>
+                <MessageSquare className="w-10 h-10" style={{ color: "rgba(99,102,241,0.55)" }} />
               </div>
+              <h3 className="text-base font-bold text-foreground mb-2">السبورة فارغة</h3>
+              <p className="text-sm text-muted-foreground max-w-xs">
+                {solveMode
+                  ? "ارفع صورة التمرين وسيبني سِيغْمَا الحل الكامل لك فوراً"
+                  : "ارفع صورة التمرين وصورة محاولتك وسيقيّم سِيغْمَا إجابتك فوراً"}
+              </p>
             </div>
           ) : (
             <div className="space-y-4">
