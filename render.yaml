@@ -4,9 +4,9 @@ services:
     runtime: node
     plan: free
     region: frankfurt
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm --filter @workspace/sheikh-dhaki run build && pnpm --filter @workspace/api-server run build
+    buildCommand: npm install -g pnpm@10.26.1 && pnpm install --frozen-lockfile --prefer-offline && pnpm --filter @workspace/sheikh-dhaki run build && pnpm --filter @workspace/api-server run build
     startCommand: node --enable-source-maps artifacts/api-server/dist/index.mjs
-    healthCheckPath: /api/health
+    healthCheckPath: /api/healthz
     envVars:
       - key: NODE_VERSION
         value: "20.19.1"
