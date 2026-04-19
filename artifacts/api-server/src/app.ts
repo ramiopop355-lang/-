@@ -36,10 +36,16 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", router);
 
-// ── خدمة ملفات الواجهة الأمامية في الإنتاج (Render وغيره) ──────────────
-const staticDir =
-  process.env["STATIC_DIR"] ||
-  path.join(process.cwd(), "artifacts/sheikh-dhaki/dist/public");
+// ── خدمة ملفات الواجهة الأمامية في الإنتاج ─────────────────────────────
+// نبحث في عدة مسارات محتملة (يعمل على Replit autoscale وغيره)
+const candidatePaths = [
+  process.env["STATIC_DIR"],
+  path.join(process.cwd(), "artifacts/sheikh-dhaki/dist/public"),
+  path.join(process.cwd(), "../sheikh-dhaki/dist/public"),
+  path.join(process.cwd(), "../../sheikh-dhaki/dist/public"),
+].filter(Boolean) as string[];
+
+const staticDir = candidatePaths.find((p) => fs.existsSync(p)) ?? candidatePaths[0]!;
 
 if (fs.existsSync(staticDir)) {
   logger.info({ staticDir }, "Serving static frontend files");

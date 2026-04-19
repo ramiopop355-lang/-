@@ -13,7 +13,7 @@
     "@google/generative-ai": "^0.24.1",
     "@types/compression": "^1.8.1",
     "@types/web-push": "^3.6.4",
-    "@upstash/redis": "^1.37.0",
+    "@replit/database": "^3.0.1",
     "@workspace/api-zod": "workspace:*",
     "@workspace/db": "workspace:*",
     "@workspace/integrations-openai-ai-server": "workspace:*",

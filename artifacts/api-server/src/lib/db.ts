@@ -1,17 +1,30 @@
-import { Redis } from "@upstash/redis";
+import Database from "@replit/database";
 
-const redis = new Redis({
-  url: process.env["UPSTASH_REDIS_REST_URL"] ?? "",
-  token: process.env["UPSTASH_REDIS_REST_TOKEN"] ?? "",
-});
+const client = new Database();
 
 type DbResult<T> = { ok: true; value: T } | { ok: false; value: null };
 
 export const db = {
   async get(key: string): Promise<DbResult<string | null>> {
     try {
-      const value = await redis.get<string>(key);
-      return { ok: true, value: value ?? null };
+      const result = await client.get(key);
+      if (result && typeof result === "object" && "ok" in result) {
+        const r = result as { ok: boolean; value: unknown };
+        const v = r.value;
+        return {
+          ok: true,
+          value: typeof v === "string" ? v : v == null ? null : JSON.stringify(v),
+        };
+      }
+      return {
+        ok: true,
+        value:
+          typeof result === "string"
+            ? result
+            : result == null
+            ? null
+            : JSON.stringify(result),
+      };
     } catch {
       return { ok: false, value: null };
     }
@@ -19,7 +32,7 @@ export const db = {
 
   async set(key: string, value: string): Promise<{ ok: boolean }> {
     try {
-      await redis.set(key, value);
+      await client.set(key, value);
       return { ok: true };
     } catch {
       return { ok: false };
@@ -28,7 +41,7 @@ export const db = {
 
   async delete(key: string): Promise<{ ok: boolean }> {
     try {
-      await redis.del(key);
+      await client.delete(key);
       return { ok: true };
     } catch {
       return { ok: false };
@@ -37,9 +50,18 @@ export const db = {
 
   async list(prefix?: string): Promise<DbResult<string[]>> {
     try {
-      const pattern = prefix ? `${prefix}*` : "*";
-      const keys = await redis.keys(pattern);
-      return { ok: true, value: keys };
+      const result = await client.list(prefix ?? "");
+      if (result && typeof result === "object" && "ok" in result) {
+        const r = result as { ok: boolean; value: unknown };
+        return {
+          ok: true,
+          value: Array.isArray(r.value) ? (r.value as string[]) : [],
+        };
+      }
+      return {
+        ok: true,
+        value: Array.isArray(result) ? (result as string[]) : [],
+      };
     } catch {
       return { ok: false, value: null };
     }

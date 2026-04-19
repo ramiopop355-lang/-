@@ -169,15 +169,15 @@ importers:
       '@google/generative-ai':
         specifier: ^0.24.1
         version: 0.24.1
+      '@replit/database':
+        specifier: ^3.0.1
+        version: 3.0.1
       '@types/compression':
         specifier: ^1.8.1
         version: 1.8.1
       '@types/web-push':
         specifier: ^3.6.4
         version: 3.6.4
-      '@upstash/redis':
-        specifier: ^1.37.0
-        version: 1.37.0
       '@workspace/api-zod':
         specifier: workspace:*
         version: link:../../lib/api-zod
@@ -201,7 +201,7 @@ importers:
         version: 2.8.6
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.1(@types/pg@8.18.0)(@upstash/redis@1.37.0)(pg@8.20.0)
+        version: 0.45.1(@types/pg@8.18.0)(pg@8.20.0)
       express:
         specifier: ^5
         version: 5.2.1
@@ -677,10 +677,10 @@ importers:
     dependencies:
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.1(@types/pg@8.18.0)(@upstash/redis@1.37.0)(pg@8.20.0)
+        version: 0.45.1(@types/pg@8.18.0)(pg@8.20.0)
       drizzle-zod:
         specifier: ^0.8.3
-        version: 0.8.3(drizzle-orm@0.45.1(@types/pg@8.18.0)(@upstash/redis@1.37.0)(pg@8.20.0))(zod@3.25.76)
+        version: 0.8.3(drizzle-orm@0.45.1(@types/pg@8.18.0)(pg@8.20.0))(zod@3.25.76)
       pg:
         specifier: ^8.20.0
         version: 8.20.0
@@ -1579,6 +1579,10 @@ packages:
   '@radix-ui/rect@1.1.1':
     resolution: {integrity: sha512-HPwpGIzkl28mWyZqG52jiqDJ12waP11Pa1lGoiyUkIEuMLBP0oeK/C89esbXrxsky5we7dfd8U58nm0SgAWpVw==}
 
+  '@replit/database@3.0.1':
+    resolution: {integrity: sha512-uCmuttqjhI+unsEtXLVm28FTkdX4m815r+INkXJsIFAvHIw3+h5mJv6X/xf3YOy2jjrZVPppsjNRqFeWEQFYQw==}
+    engines: {node: '>=18'}
+
   '@replit/vite-plugin-cartographer@0.5.1':
     resolution: {integrity: sha512-KiaQMx4ssTM8hSjMFscyIV1PN1bRVCWCFqN3fXOfXa39uFFCKUaeL3VvH/sxuy7S7ET+MCFOt+J7lLtL56bRrA==}
 
@@ -1824,9 +1828,6 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
-
-  '@upstash/redis@1.37.0':
-    resolution: {integrity: sha512-LqOJ3+XWPLSZ2rGSed5DYG3ixybxb8EhZu3yQqF7MdZX1wLBG/FRcI6xcUZXHy/SS7mmXWyadrud0HJHkOc+uw==}
 
   '@vitejs/plugin-react@5.1.4':
     resolution: {integrity: sha512-VIcFLdRi/VYRU8OL/puL7QXMYafHmqOnwTZY50U1JPlCNj30PxCMx65c494b1K9be9hX83KVt0+gTEwTWLqToA==}
@@ -3652,9 +3653,6 @@ packages:
   uc.micro@2.1.0:
     resolution: {integrity: sha512-ARDJmphmdvUk6Glw7y9DQ2bFkKBHwQHLi2lsaH6PPmz/Ka9sFOBsBluozhDltWmnv9u/cF6Rt87znRTPV+yp/A==}
 
-  uncrypto@0.1.3:
-    resolution: {integrity: sha512-Ql87qFHB3s/De2ClA9e0gsnS6zXG27SkTiSJwjCc9MebbfapQfuPzumMIUMi38ezPZVNFcHI9sUIepeQfw8J8Q==}
-
   undici-types@7.18.2:
     resolution: {integrity: sha512-AsuCzffGHJybSaRrmr5eHr81mwJU3kjw6M+uprWvCXiNeN9SOGwQ3Jn8jb8m3Z6izVgknn1R0FTCEAP2QrLY/w==}
 
@@ -4838,6 +4836,8 @@ snapshots:
 
   '@radix-ui/rect@1.1.1': {}
 
+  '@replit/database@3.0.1': {}
+
   '@replit/vite-plugin-cartographer@0.5.1':
     dependencies:
       '@babel/parser': 7.29.0
@@ -5115,10 +5115,6 @@ snapshots:
       '@types/node': 25.3.5
 
   '@ungap/structured-clone@1.3.0': {}
-
-  '@upstash/redis@1.37.0':
-    dependencies:
-      uncrypto: 0.1.3
 
   '@vitejs/plugin-react@5.1.4(vite@7.3.1(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2))':
     dependencies:
@@ -5432,15 +5428,14 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.45.1(@types/pg@8.18.0)(@upstash/redis@1.37.0)(pg@8.20.0):
+  drizzle-orm@0.45.1(@types/pg@8.18.0)(pg@8.20.0):
     optionalDependencies:
       '@types/pg': 8.18.0
-      '@upstash/redis': 1.37.0
       pg: 8.20.0
 
-  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@types/pg@8.18.0)(@upstash/redis@1.37.0)(pg@8.20.0))(zod@3.25.76):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@types/pg@8.18.0)(pg@8.20.0))(zod@3.25.76):
     dependencies:
-      drizzle-orm: 0.45.1(@types/pg@8.18.0)(@upstash/redis@1.37.0)(pg@8.20.0)
+      drizzle-orm: 0.45.1(@types/pg@8.18.0)(pg@8.20.0)
       zod: 3.25.76
 
   dunder-proto@1.0.1:
@@ -7133,8 +7128,6 @@ snapshots:
   typescript@5.9.3: {}
 
   uc.micro@2.1.0: {}
-
-  uncrypto@0.1.3: {}
 
   undici-types@7.18.2: {}
 

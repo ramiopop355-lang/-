@@ -1,8 +1,0 @@
-node_modules
-.local
-attached_assets
-artifacts/sheikh-dhaki/dist
-artifacts/api-server/dist
-artifacts/mockup-sandbox
-.git
-*.log
