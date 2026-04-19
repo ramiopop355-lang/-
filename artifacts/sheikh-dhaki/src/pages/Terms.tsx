@@ -85,7 +85,7 @@ export default function Terms() {
           <h1 className="text-2xl font-black text-foreground">شروط الاستخدام</h1>
         </div>
         <p className="text-xs text-muted-foreground mb-8 mr-12">
-          Terms of Service — سِيغْمَا Σ &nbsp;|&nbsp; آخر تحديث: أبريل 2026
+          سِيغْمَا Σ &nbsp;|&nbsp; آخر تحديث: أبريل 2026
         </p>
 
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-8">
@@ -125,7 +125,7 @@ export default function Terms() {
 
         <div className="mt-12 pt-6 border-t border-border text-xs text-muted-foreground text-center space-y-1">
           <p>سِيغْمَا Σ — جميع الحقوق محفوظة 2026</p>
-          <p className="text-indigo-400/70">sigmaaidzbac.replit.app/terms</p>
+          <p className="text-indigo-400/70">صفحة شروط الاستخدام</p>
         </div>
       </div>
     </div>

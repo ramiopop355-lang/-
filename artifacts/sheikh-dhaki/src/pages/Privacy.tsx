@@ -94,7 +94,7 @@ export default function Privacy() {
           <h1 className="text-2xl font-black text-foreground">سياسة الخصوصية</h1>
         </div>
         <p className="text-xs text-muted-foreground mb-8 mr-12">
-          Privacy Policy — سِيغْمَا Σ &nbsp;|&nbsp; آخر تحديث: مارس 2026
+          سِيغْمَا Σ &nbsp;|&nbsp; آخر تحديث: مارس 2026
         </p>
 
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 mb-4">
@@ -125,7 +125,7 @@ export default function Privacy() {
 
         <div className="mt-12 pt-6 border-t border-border text-xs text-muted-foreground text-center space-y-1">
           <p>سِيغْمَا Σ — جميع الحقوق محفوظة 2026</p>
-          <p className="text-indigo-400/70">sigmaaidzbac.replit.app/privacy</p>
+          <p className="text-indigo-400/70">صفحة سياسة الخصوصية</p>
         </div>
       </div>
     </div>
