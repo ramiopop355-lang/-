@@ -3,6 +3,7 @@ import cors from "cors";
 import compression from "compression";
 import pinoHttp from "pino-http";
 import multer from "multer";
+import expressStaticGzip from "express-static-gzip";
 import path from "node:path";
 import fs from "node:fs";
 import router from "./routes";
@@ -10,7 +11,7 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
-app.use(compression());
+app.use(compression({ level: 6, threshold: 1024 }));
 app.use(
   pinoHttp({
     logger,
@@ -48,15 +49,20 @@ const candidatePaths = [
 const staticDir = candidatePaths.find((p) => fs.existsSync(p)) ?? candidatePaths[0]!;
 
 if (fs.existsSync(staticDir)) {
-  logger.info({ staticDir }, "Serving static frontend files");
+  logger.info({ staticDir }, "Serving static frontend files (br + gzip + cached)");
   app.use(
-    express.static(staticDir, {
-      maxAge: "1y",
+    expressStaticGzip(staticDir, {
+      enableBrotli: true,
+      orderPreference: ["br", "gz"],
       index: false,
-      setHeaders: (res, filePath) => {
-        if (filePath.endsWith("index.html") || filePath.endsWith("sw.js")) {
-          res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-        }
+      serveStatic: {
+        maxAge: "1y",
+        immutable: true,
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith("index.html") || filePath.endsWith("sw.js")) {
+            res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+          }
+        },
       },
     }),
   );
@@ -65,13 +71,14 @@ if (fs.existsSync(staticDir)) {
   app.get(/^\/(?!api).*/, (_req: Request, res: Response, next: NextFunction) => {
     const indexPath = path.join(staticDir, "index.html");
     if (fs.existsSync(indexPath)) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.sendFile(indexPath);
     } else {
       next();
     }
   });
 } else {
-  logger.warn({ staticDir }, "Static directory not found — frontend will not be served");
+  logger.info({ staticDir }, "Static directory not found (dev mode — Vite serves frontend)");
 }
 
 // ── معالج الأخطاء الشامل — يُرجع JSON دائماً ──────────────────────────
