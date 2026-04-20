@@ -429,8 +429,10 @@ type ImageUploadZoneProps = {
 
 const ImageUploadZone = React.memo(function ImageUploadZone({ label, icon, hint, file, previewUrl, onFileChange, onClear, accent = "indigo" }: ImageUploadZoneProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const zoneRef = useRef<HTMLButtonElement>(null);
   const palette = ACCENT_PALETTE[accent];
   const [hover, setHover] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     if (!file && inputRef.current) {
@@ -438,13 +440,37 @@ const ImageUploadZone = React.memo(function ImageUploadZone({ label, icon, hint,
     }
   }, [file]);
 
+  // ── سحب وإفلات ───────────────────────────────────────────────────
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
+    setDragging(false);
     const f = e.dataTransfer.files[0];
     if (f && f.type.startsWith("image/")) {
       onFileChange(f);
     }
   }, [onFileChange]);
+
+  // ── لصق من الحافظة (Ctrl+V أو لمس مطوّل → لصق على الهاتف) ────────
+  useEffect(() => {
+    if (previewUrl) return;
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith("image/")) {
+          const f = item.getAsFile();
+          if (f) {
+            e.preventDefault();
+            onFileChange(f);
+            return;
+          }
+        }
+      }
+    };
+    const node = zoneRef.current;
+    node?.addEventListener("paste", handlePaste as EventListener);
+    return () => node?.removeEventListener("paste", handlePaste as EventListener);
+  }, [previewUrl, onFileChange]);
 
   return (
     <div className="space-y-1.5">
@@ -455,23 +481,27 @@ const ImageUploadZone = React.memo(function ImageUploadZone({ label, icon, hint,
       <input
         type="file"
         ref={inputRef}
-        accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif"
+        accept="image/*"
         className="hidden"
         onChange={(e) => { if (e.target.files?.[0]) onFileChange(e.target.files[0]); }}
       />
       {!previewUrl ? (
         <button
+          ref={zoneRef}
           type="button"
           onClick={() => inputRef.current?.click()}
           onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
+          onDragEnter={(e) => { e.preventDefault(); setDragging(true); }}
+          onDragLeave={() => setDragging(false)}
+          onDragOver={(e) => { e.preventDefault(); if (!dragging) setDragging(true); }}
           onMouseEnter={() => setHover(true)}
           onMouseLeave={() => setHover(false)}
-          className="w-full transition-all rounded-2xl p-4 flex flex-col items-center gap-1.5 group"
+          className="w-full transition-all rounded-2xl p-4 flex flex-col items-center gap-1.5 group focus:outline-none"
           style={{
-            background: hover ? palette.bgHover : palette.bgIdle,
-            border: `2px dashed ${hover ? palette.borderHover : palette.borderIdle}`,
-            boxShadow: hover ? palette.shadow : `inset 0 0 0 1px ${palette.ring}`,
+            background: dragging || hover ? palette.bgHover : palette.bgIdle,
+            border: `2px dashed ${dragging || hover ? palette.borderHover : palette.borderIdle}`,
+            boxShadow: dragging || hover ? palette.shadow : `inset 0 0 0 1px ${palette.ring}`,
+            transform: dragging ? "scale(1.01)" : "scale(1)",
           }}
         >
           <div
@@ -480,8 +510,10 @@ const ImageUploadZone = React.memo(function ImageUploadZone({ label, icon, hint,
           >
             <Upload className="w-4 h-4" style={{ color: palette.iconColor }} />
           </div>
-          <span className="text-xs font-bold text-foreground">اختر صورة أو اسحبها</span>
-          <span className="text-[11px] text-muted-foreground">{hint} · JPG, PNG, WEBP</span>
+          <span className="text-xs font-bold text-foreground">
+            {dragging ? "أفلت الصورة هنا" : "اختر صورة، التقطها، أو الصقها"}
+          </span>
+          <span className="text-[11px] text-muted-foreground">{hint} · JPG, PNG, WEBP, HEIC</span>
         </button>
       ) : (
         <div
