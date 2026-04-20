@@ -36,13 +36,28 @@
     <noscript><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&family=Amiri:ital,wght@0,400;0,700;1,400&family=Caveat:wght@500;700&display=swap" rel="stylesheet"></noscript>
 
     <style>
-      /* Safe-area custom properties for env() support */
+      /* Safe-area + critical CSS to avoid white flash before app hydrates */
       :root {
         --safe-bottom: env(safe-area-inset-bottom, 0px);
         --safe-top: env(safe-area-inset-top, 0px);
         --safe-left: env(safe-area-inset-left, 0px);
         --safe-right: env(safe-area-inset-right, 0px);
       }
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: #0f0f1a;
+        color: #f5f5f7;
+        min-height: 100vh;
+        font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+      @media (prefers-color-scheme: light) {
+        html, body { background: #ffffff; color: #0f0f1a; }
+      }
+      #root { min-height: 100vh; }
     </style>
   </head>
   <body>
