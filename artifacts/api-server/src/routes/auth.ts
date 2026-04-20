@@ -319,10 +319,28 @@ async function verifyPaymentReceipt(
   const result = applyVerificationLogic(data, level);
   result.data = data;
 
-  // ── 5. إذا قُبل → حفظ الـ hash فقط لمنع إعادة استخدام نفس الصورة ──
+  // ── 4.b التحقق من تكرار رقم العملية (نفس الوصل بصورة مختلفة) ──────
+  // هذا يحمي من إعادة استخدام نفس وصل الدفع بعد قص أو لقطة شاشة جديدة.
+  if (result.valid && data.transactionId) {
+    const txnKey = `receipt:txn:${data.transactionId}`;
+    const existingTxn = await db.get(txnKey);
+    if (existingTxn.ok && existingTxn.value) {
+      return {
+        valid: false,
+        reason: `رقم العملية ${data.transactionId} استُخدم مسبقاً لتفعيل حساب آخر`,
+        code: "DUPLICATE_TXN",
+        data,
+      };
+    }
+  }
+
+  // ── 5. إذا قُبل → حفظ الـ hash + رقم العملية لمنع إعادة الاستخدام ──
   if (result.valid) {
     const meta = { at: new Date().toISOString(), amount: data.amount, level };
     await db.set(hashKey, JSON.stringify(meta));
+    if (data.transactionId) {
+      await db.set(`receipt:txn:${data.transactionId}`, JSON.stringify(meta));
+    }
   }
 
   return result;

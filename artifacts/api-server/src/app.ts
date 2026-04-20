@@ -4,6 +4,7 @@ import compression from "compression";
 import pinoHttp from "pino-http";
 import multer from "multer";
 import expressStaticGzip from "express-static-gzip";
+import rateLimit from "express-rate-limit";
 import path from "node:path";
 import fs from "node:fs";
 import router from "./routes";
@@ -11,7 +12,36 @@ import { logger } from "./lib/logger";
 
 const app: Express = express();
 
+// نثق بـ proxy واحد (Replit) للحصول على IP الحقيقي للعميل
+app.set("trust proxy", 1);
+
 app.use(compression({ level: 6, threshold: 1024 }));
+
+// ── Rate Limiting ──────────────────────────────────────────────────────
+// حدّ عام لكل المسارات تحت /api لمنع إساءة الاستخدام العامة
+const apiLimiter = rateLimit({
+  windowMs: 60_000,           // نافذة دقيقة واحدة
+  limit: 120,                 // 120 طلب/دقيقة لكل IP (تصفّح عادي مريح)
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "طلبات كثيرة جداً — انتظر دقيقة ثم حاول مجدداً" },
+});
+
+// حدّ صارم على المسارات المُكلِفة (تصحيح AI، تفعيل بوصل، تسجيل دخول)
+// هذه الطلبات تستهلك حصّة Gemini/OpenRouter أو CPU bcrypt.
+const expensiveLimiter = rateLimit({
+  windowMs: 60_000,
+  limit: 12,                  // 12 طلب/دقيقة — يكفي للاستخدام البشري الطبيعي
+  standardHeaders: "draft-7",
+  legacyHeaders: false,
+  message: { error: "محاولات كثيرة في وقت قصير — انتظر دقيقة ثم حاول مجدداً" },
+});
+
+app.use("/api/correct",        expensiveLimiter);
+app.use("/api/auth/activate",  expensiveLimiter);
+app.use("/api/auth/login",     expensiveLimiter);
+app.use("/api/auth/register",  expensiveLimiter);
+app.use("/api",                apiLimiter);
 app.use(
   pinoHttp({
     logger,

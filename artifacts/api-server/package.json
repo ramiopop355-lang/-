@@ -23,6 +23,7 @@
     "cors": "^2",
     "drizzle-orm": "catalog:",
     "express": "^5",
+    "express-rate-limit": "^8.3.2",
     "express-static-gzip": "^3.0.0",
     "jsonwebtoken": "^9.0.3",
     "mathjs": "^15.1.1",
