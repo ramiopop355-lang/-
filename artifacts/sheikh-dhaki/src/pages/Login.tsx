@@ -743,7 +743,7 @@ export default function Login() {
                             onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "#6366f1"; (e.currentTarget as HTMLElement).style.background = "rgba(99,102,241,0.04)"; }}
                             onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = "hsl(var(--border))"; (e.currentTarget as HTMLElement).style.background = "hsl(var(--muted)/0.3)"; }}
                           >
-                            <input type="file" accept="image/png,image/jpeg,image/jpg,image/webp,image/heic,image/heif" className="hidden" onChange={handleUpload} disabled={isUploading} />
+                            <input type="file" className="hidden" onChange={handleUpload} disabled={isUploading} />
 
                             {isUploading ? (
                               <div className="flex flex-col items-center gap-2 py-2">
