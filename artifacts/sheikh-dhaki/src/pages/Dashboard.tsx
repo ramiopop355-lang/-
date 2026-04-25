@@ -962,6 +962,7 @@ export default function Dashboard() {
   };
 
   const handleSubmit = async () => {
+    if (isPending) return; // حماية من النقر المزدوج أو سباق التشغيل التلقائي
     if (!isActivated && trialExpired) {
       setShowPayment(true);
       return;
@@ -1143,6 +1144,24 @@ export default function Dashboard() {
   };
 
   const canSubmit = exerciseFiles.length > 0 && (solveMode || attemptFiles.length > 0) && (isActivated || !trialExpired);
+
+  // ── التصحيح التلقائي: ينطلق فور توفر كل الصور المطلوبة ──
+  // تأخير 2.5ث ليتمكّن الطالب من إضافة صور إضافية أو استبدالها
+  const handleSubmitRef = useRef(handleSubmit);
+  useEffect(() => { handleSubmitRef.current = handleSubmit; });
+  const [autoSubmitPending, setAutoSubmitPending] = useState(false);
+  useEffect(() => {
+    if (isPending) { setAutoSubmitPending(false); return; }
+    if (!canSubmit) { setAutoSubmitPending(false); return; }
+    setAutoSubmitPending(true);
+    const t = setTimeout(() => {
+      setAutoSubmitPending(false);
+      handleSubmitRef.current();
+    }, 2500);
+    // لا نعيد ضبط autoSubmitPending هنا لتجنّب ومضة UI عند إضافة المزيد من الصور
+    return () => { clearTimeout(t); };
+    // نراقب المصفوفات نفسها (لا الطول فقط) حتى نلتقط استبدال الملفات
+  }, [exerciseFiles, attemptFiles, solveMode, isPending, canSubmit]);
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col relative overflow-x-hidden">
@@ -1464,6 +1483,11 @@ export default function Dashboard() {
                   <div className="w-4 h-4 border-2 border-yellow-300 border-t-transparent rounded-full animate-spin" />
                   <span className="text-yellow-200">{solveMode ? "جاري بناء الحل..." : "جاري التصحيح..."}</span>
                 </>
+              ) : autoSubmitPending ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-yellow-300 border-t-transparent rounded-full animate-spin" />
+                  <span className="text-yellow-200">سيبدأ التصحيح تلقائياً...</span>
+                </>
               ) : (
                 <>
                   <Sparkles className="w-4 h-4 text-yellow-300 drop-shadow-[0_0_6px_rgba(253,224,71,0.8)]" />
@@ -1477,11 +1501,16 @@ export default function Dashboard() {
                 </>
               )}
             </button>
-            {!canSubmit && (
+            {autoSubmitPending && !isPending && (
+              <p className="text-center text-[11px] text-yellow-600 dark:text-yellow-400 mt-2 animate-pulse">
+                ✨ يمكنك إضافة المزيد من الصور أو سيبدأ التصحيح خلال لحظات
+              </p>
+            )}
+            {!canSubmit && !autoSubmitPending && (
               <p className="text-center text-xs text-muted-foreground mt-2">
                 {trialExpired
                   ? <button onClick={() => setShowPayment(true)} className="text-primary font-bold hover:underline">فعّل حسابك (500 دج) للاستمرار ←</button>
-                  : !exerciseFile
+                  : exerciseFiles.length === 0
                     ? "ارفع صورة التمرين"
                     : !solveMode ? "ارفع صورة محاولتك" : ""}
               </p>
