@@ -1027,6 +1027,16 @@ export default function Dashboard() {
           setShowPayment(true);
           return;
         }
+        if (err.code === "DAILY_LIMIT") {
+          // الحد اليومي 30 تصحيح/حساب — لا نُخبر الطالب إلا الآن
+          toast({
+            title: "🌙 وصلت إلى الحد اليومي",
+            description: err.error ?? "وصلت إلى الحد اليومي (30 تصحيح). يُفتح من جديد عند منتصف الليل بتوقيت الجزائر.",
+            variant: "destructive",
+            duration: 8000,
+          });
+          return;
+        }
         throw new Error(err.error || `خطأ ${response.status} — حاول مجدداً`);
       }
 

@@ -11,6 +11,7 @@ const JWT_SECRET = process.env["JWT_SECRET"];
 if (!JWT_SECRET) throw new Error("[STARTUP] JWT_SECRET environment variable is not set — server cannot start securely");
 
 const TRIAL_MAX  = 3;
+const DAILY_MAX  = 30; // الحد اليومي لكل حساب مفعّل (مكافحة الإفراط)
 
 async function getTrialCount(key: string): Promise<number> {
   const r = await db.get(key).catch(() => ({ ok: false, value: null }));
@@ -21,6 +22,15 @@ async function getTrialCount(key: string): Promise<number> {
 
 async function incrementTrial(key: string, current: number): Promise<void> {
   await db.set(key, String(current + 1)).catch(() => null);
+}
+
+// ── الحد اليومي: التاريخ بتوقيت الجزائر (UTC+1، بلا توقيت صيفي) ──
+function dzDateKey(): string {
+  // نضيف ساعة واحدة للحصول على تاريخ اليوم بتوقيت الجزائر
+  return new Date(Date.now() + 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+function dailyKeyFor(username: string): string {
+  return `daily:user:${username}:${dzDateKey()}`;
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -865,12 +875,14 @@ router.post(
       const authHeader = req.headers["authorization"] ?? "";
       const rawToken   = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
       let isActivated  = false;
+      let username: string | null = null;
       const trialDbKey = `trial:device:${deviceId}`;
 
       if (rawToken && rawToken !== "trial") {
         try {
           const payload = jwt.verify(rawToken, JWT_SECRET) as { username?: string; activated?: boolean };
           isActivated  = payload.activated === true;
+          username     = payload.username ?? null;
         } catch {
           // رمز غير صالح — نُعامله كمستخدم تجريبي
         }
@@ -883,6 +895,23 @@ router.post(
           res.status(402).json({
             error: "انتهت نسختك التجريبية — فعّل حسابك بـ 500 دج للاستمرار",
             code: "TRIAL_EXHAUSTED",
+          });
+          return;
+        }
+      }
+
+      // ── الحد اليومي: 30 تصحيح/حساب/يوم (للحسابات المفعّلة فقط) ─────
+      // (الحسابات التجريبية محمية أصلاً بحد TRIAL_MAX = 3 إجمالي)
+      let dailyKey: string | null = null;
+      let dailyCount = 0;
+      if (isActivated && username) {
+        dailyKey   = dailyKeyFor(username);
+        dailyCount = await getTrialCount(dailyKey);
+        if (dailyCount >= DAILY_MAX) {
+          res.status(429).json({
+            error: `وصلت إلى الحد اليومي (${DAILY_MAX} تصحيح في اليوم). يُفتح من جديد عند منتصف الليل بتوقيت الجزائر.`,
+            code: "DAILY_LIMIT",
+            limit: DAILY_MAX,
           });
           return;
         }
@@ -956,9 +985,13 @@ ${mathjsVerification ? `\n**[نتائج التحقق الحسابي التلقا
         // ── تتبع التجارب: يُحسب عند أول رمز ناجح من AI ──
         let trialCounted = false;
         const countTrialOnce = async () => {
-          if (!isActivated && !trialCounted) {
-            trialCounted = true;
+          if (trialCounted) return;
+          trialCounted = true;
+          if (!isActivated) {
             await incrementTrial(trialDbKey, trialCount);
+          } else if (dailyKey) {
+            // الحساب المفعّل: نزيد العدّاد اليومي
+            await incrementTrial(dailyKey, dailyCount);
           }
         };
 
