@@ -96,13 +96,30 @@ jobs:
           echo "════════════════════════════════════════════════════════════════"
           echo ""
 
+      - name: Initialize Bubblewrap project (non-interactive)
+        working-directory: twa-source
+        env:
+          STORE_PASS: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD || 'SigmaBac2026!' }}
+        run: |
+          if [ ! -f build.gradle ]; then
+            echo "No Android project found — running bubblewrap init"
+            # Pipe Y for any yes/no prompt and empty for any text prompt that has a default
+            yes "" | bubblewrap init \
+              --manifest=./twa-manifest.json \
+              --skipPwaValidation || true
+          else
+            echo "Android project already exists — skipping init"
+          fi
+          ls -la
+
       - name: Build signed AAB and APK
         working-directory: twa-source
         env:
           STORE_PASS: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD || 'SigmaBac2026!' }}
           KEY_PASS: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD || 'SigmaBac2026!' }}
         run: |
-          bubblewrap build \
+          # `yes` answers Y to "regenerate project?" and any other yes/no prompt
+          yes | bubblewrap build \
             --skipPwaValidation \
             --signingKeyPath ./sigma-release.keystore \
             --signingKeyAlias sigma \
