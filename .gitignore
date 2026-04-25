@@ -54,3 +54,6 @@ twa-build/
 *.jks
 .local/sigma-keystore-base64.txt
 .local/sigma-keystore-credentials.txt
+
+# encrypted keystore IS safe to commit
+!twa-source/sigma-release.keystore.enc

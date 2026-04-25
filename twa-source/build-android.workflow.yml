@@ -36,43 +36,45 @@ jobs:
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli@1.21.0
 
-      - name: Restore signing keystore from secret
+      - name: Decrypt signing keystore
         env:
-          KEYSTORE_B64: ${{ secrets.SIGMA_KEYSTORE_BASE64 }}
+          KEYSTORE_DECRYPT_PASSWORD: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD }}
         run: |
-          if [ -z "$KEYSTORE_B64" ]; then
-            echo "::warning::SIGMA_KEYSTORE_BASE64 secret not set — generating a fresh keystore (run-specific)."
-            keytool -genkeypair -v \
-              -keystore twa-source/sigma-release.keystore \
-              -alias sigma \
-              -keyalg RSA -keysize 2048 -validity 10000 \
-              -storepass "${{ secrets.SIGMA_KEYSTORE_PASSWORD || 'SigmaBac2026!' }}" \
-              -keypass "${{ secrets.SIGMA_KEY_PASSWORD || 'SigmaBac2026!' }}" \
-              -dname "CN=Wadjed Merada, OU=Sigma Education, O=Sigma, L=Laghouat, ST=Laghouat, C=DZ"
-          else
-            echo "$KEYSTORE_B64" | base64 -d > twa-source/sigma-release.keystore
-            echo "Keystore restored from secret."
+          if [ -z "$KEYSTORE_DECRYPT_PASSWORD" ]; then
+            echo "::error::KEYSTORE_DECRYPT_PASSWORD secret is not set. Add it in repo Settings → Secrets and variables → Actions."
+            exit 1
           fi
+          if [ ! -f twa-source/sigma-release.keystore.enc ]; then
+            echo "::error::Encrypted keystore file twa-source/sigma-release.keystore.enc is missing from the repo."
+            exit 1
+          fi
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 \
+            -in twa-source/sigma-release.keystore.enc \
+            -out twa-source/sigma-release.keystore \
+            -pass pass:"$KEYSTORE_DECRYPT_PASSWORD"
+          echo "Keystore decrypted successfully ($(wc -c < twa-source/sigma-release.keystore) bytes)."
 
-      - name: Print SHA-256 fingerprint (paste this into assetlinks.json)
+      - name: Print SHA-256 fingerprint
         run: |
           echo ""
           echo "════════════════════════════════════════════════════════════════"
-          echo "  COPY THIS SHA-256 INTO public/.well-known/assetlinks.json   "
+          echo "  Signing certificate SHA-256 (already in assetlinks.json)"
           echo "════════════════════════════════════════════════════════════════"
           keytool -list -v \
             -keystore twa-source/sigma-release.keystore \
             -alias sigma \
-            -storepass "${{ secrets.SIGMA_KEYSTORE_PASSWORD || 'SigmaBac2026!' }}" \
+            -storepass "$KEYSTORE_DECRYPT_PASSWORD" \
             2>/dev/null | grep "SHA256:" | sed 's/^[ \t]*//'
           echo "════════════════════════════════════════════════════════════════"
           echo ""
+        env:
+          KEYSTORE_DECRYPT_PASSWORD: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD }}
 
       - name: Build signed AAB and APK
         working-directory: twa-source
         env:
-          STORE_PASS: ${{ secrets.SIGMA_KEYSTORE_PASSWORD || 'SigmaBac2026!' }}
-          KEY_PASS: ${{ secrets.SIGMA_KEY_PASSWORD || 'SigmaBac2026!' }}
+          STORE_PASS: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD }}
+          KEY_PASS: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD }}
         run: |
           bubblewrap build \
             --skipPwaValidation \
@@ -83,14 +85,13 @@ jobs:
           echo "---ARTIFACTS---"
           ls -la *.aab *.apk 2>/dev/null || true
 
-      - name: Upload AAB + APK + assetlinks helper
+      - name: Upload AAB + APK
         uses: actions/upload-artifact@v4
         with:
           name: sigma-android-release
           path: |
             twa-source/app-release-bundle.aab
             twa-source/app-release-signed.apk
-            twa-source/assetlinks.json
           if-no-files-found: error
           retention-days: 90
 
@@ -104,5 +105,3 @@ jobs:
           echo "### Next steps" >> $GITHUB_STEP_SUMMARY
           echo "1. Download \`sigma-android-release\` artifact" >> $GITHUB_STEP_SUMMARY
           echo "2. Upload \`app-release-bundle.aab\` to Google Play Console → Production → Create release" >> $GITHUB_STEP_SUMMARY
-          echo "3. Copy the SHA-256 from the build logs above into \`artifacts/sheikh-dhaki/public/.well-known/assetlinks.json\`" >> $GITHUB_STEP_SUMMARY
-          echo "4. Republish the Replit app so the new assetlinks.json goes live" >> $GITHUB_STEP_SUMMARY
