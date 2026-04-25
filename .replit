@@ -35,3 +35,4 @@ OWNER_CCP_ACCOUNT = "00799999002789880450"
 
 [nix]
 channel = "stable-25_05"
+packages = ["gh"]
