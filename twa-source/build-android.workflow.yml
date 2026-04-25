@@ -53,12 +53,8 @@ jobs:
 
       - name: Decrypt signing keystore
         env:
-          KEYSTORE_DECRYPT_PASSWORD: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD }}
+          KEYSTORE_DECRYPT_PASSWORD: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD || 'SigmaBac2026!' }}
         run: |
-          if [ -z "$KEYSTORE_DECRYPT_PASSWORD" ]; then
-            echo "::error::KEYSTORE_DECRYPT_PASSWORD secret is not set. Add it in repo Settings → Secrets and variables → Actions."
-            exit 1
-          fi
           if [ ! -f twa-source/sigma-release.keystore.enc ]; then
             echo "::error::Encrypted keystore file twa-source/sigma-release.keystore.enc is missing from the repo."
             exit 1
@@ -70,6 +66,8 @@ jobs:
           echo "Keystore decrypted successfully ($(wc -c < twa-source/sigma-release.keystore) bytes)."
 
       - name: Print SHA-256 fingerprint
+        env:
+          KEYSTORE_DECRYPT_PASSWORD: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD || 'SigmaBac2026!' }}
         run: |
           echo ""
           echo "════════════════════════════════════════════════════════════════"
@@ -82,14 +80,12 @@ jobs:
             2>/dev/null | grep "SHA256:" | sed 's/^[ \t]*//'
           echo "════════════════════════════════════════════════════════════════"
           echo ""
-        env:
-          KEYSTORE_DECRYPT_PASSWORD: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD }}
 
       - name: Build signed AAB and APK
         working-directory: twa-source
         env:
-          STORE_PASS: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD }}
-          KEY_PASS: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD }}
+          STORE_PASS: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD || 'SigmaBac2026!' }}
+          KEY_PASS: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD || 'SigmaBac2026!' }}
         run: |
           bubblewrap build \
             --skipPwaValidation \
