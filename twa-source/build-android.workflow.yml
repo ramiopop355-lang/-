@@ -31,7 +31,22 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: "build-tools;34.0.0 platforms;android-34"
+          packages: "build-tools;34.0.0 platforms;android-34 platform-tools tools"
+
+      - name: Verify Android SDK structure for Bubblewrap
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls -la "$ANDROID_HOME"
+          # Bubblewrap looks for build-tools/, platform-tools/, platforms/, and tools/
+          for d in build-tools platform-tools platforms tools; do
+            if [ ! -d "$ANDROID_HOME/$d" ]; then
+              echo "::warning::Missing $ANDROID_HOME/$d — creating from cmdline-tools if possible"
+              if [ "$d" = "tools" ] && [ -d "$ANDROID_HOME/cmdline-tools/latest" ]; then
+                ln -s "$ANDROID_HOME/cmdline-tools/latest" "$ANDROID_HOME/tools"
+              fi
+            fi
+            ls -la "$ANDROID_HOME/$d" 2>/dev/null | head -3 || echo "  (still missing)"
+          done
 
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli@1.21.0
