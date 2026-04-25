@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "deyOyMkpxhx9M7Aoy72pH"
+uri = "file://.local/sigma-keystore-credentials.txt"
+type = "text"
+title = "بيانات توقيع التطبيق + خطوات GitHub Secrets"

@@ -1,0 +1,108 @@
+name: Build Sigma Android AAB
+
+on:
+  push:
+    branches: [master, main]
+    paths:
+      - "twa-source/**"
+      - ".github/workflows/build-android.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: "build-tools;34.0.0 platforms;android-34"
+
+      - name: Install Bubblewrap
+        run: npm install -g @bubblewrap/cli@1.21.0
+
+      - name: Restore signing keystore from secret
+        env:
+          KEYSTORE_B64: ${{ secrets.SIGMA_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "::warning::SIGMA_KEYSTORE_BASE64 secret not set — generating a fresh keystore (run-specific)."
+            keytool -genkeypair -v \
+              -keystore twa-source/sigma-release.keystore \
+              -alias sigma \
+              -keyalg RSA -keysize 2048 -validity 10000 \
+              -storepass "${{ secrets.SIGMA_KEYSTORE_PASSWORD || 'SigmaBac2026!' }}" \
+              -keypass "${{ secrets.SIGMA_KEY_PASSWORD || 'SigmaBac2026!' }}" \
+              -dname "CN=Wadjed Merada, OU=Sigma Education, O=Sigma, L=Laghouat, ST=Laghouat, C=DZ"
+          else
+            echo "$KEYSTORE_B64" | base64 -d > twa-source/sigma-release.keystore
+            echo "Keystore restored from secret."
+          fi
+
+      - name: Print SHA-256 fingerprint (paste this into assetlinks.json)
+        run: |
+          echo ""
+          echo "════════════════════════════════════════════════════════════════"
+          echo "  COPY THIS SHA-256 INTO public/.well-known/assetlinks.json   "
+          echo "════════════════════════════════════════════════════════════════"
+          keytool -list -v \
+            -keystore twa-source/sigma-release.keystore \
+            -alias sigma \
+            -storepass "${{ secrets.SIGMA_KEYSTORE_PASSWORD || 'SigmaBac2026!' }}" \
+            2>/dev/null | grep "SHA256:" | sed 's/^[ \t]*//'
+          echo "════════════════════════════════════════════════════════════════"
+          echo ""
+
+      - name: Build signed AAB and APK
+        working-directory: twa-source
+        env:
+          STORE_PASS: ${{ secrets.SIGMA_KEYSTORE_PASSWORD || 'SigmaBac2026!' }}
+          KEY_PASS: ${{ secrets.SIGMA_KEY_PASSWORD || 'SigmaBac2026!' }}
+        run: |
+          bubblewrap build \
+            --skipPwaValidation \
+            --signingKeyPath ./sigma-release.keystore \
+            --signingKeyAlias sigma \
+            --ksPassword "$STORE_PASS" \
+            --keyPassword "$KEY_PASS"
+          echo "---ARTIFACTS---"
+          ls -la *.aab *.apk 2>/dev/null || true
+
+      - name: Upload AAB + APK + assetlinks helper
+        uses: actions/upload-artifact@v4
+        with:
+          name: sigma-android-release
+          path: |
+            twa-source/app-release-bundle.aab
+            twa-source/app-release-signed.apk
+            twa-source/assetlinks.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Sigma Android Build Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download the AAB from the **Artifacts** section above." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download \`sigma-android-release\` artifact" >> $GITHUB_STEP_SUMMARY
+          echo "2. Upload \`app-release-bundle.aab\` to Google Play Console → Production → Create release" >> $GITHUB_STEP_SUMMARY
+          echo "3. Copy the SHA-256 from the build logs above into \`artifacts/sheikh-dhaki/public/.well-known/assetlinks.json\`" >> $GITHUB_STEP_SUMMARY
+          echo "4. Republish the Replit app so the new assetlinks.json goes live" >> $GITHUB_STEP_SUMMARY

@@ -46,5 +46,11 @@ Thumbs.db
 
 # Replit
 .cache/
-.local/
-.github/workflows/build-android.yml
+
+# Android signing keystore (NEVER commit — base64 lives in GitHub Secret SIGMA_KEYSTORE_BASE64)
+twa-source/sigma-release.keystore
+twa-build/
+*.keystore
+*.jks
+.local/sigma-keystore-base64.txt
+.local/sigma-keystore-credentials.txt
