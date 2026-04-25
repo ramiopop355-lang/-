@@ -828,10 +828,10 @@ export default function Dashboard() {
       if (!launchParams.files.length) return;
       try {
         const first = await launchParams.files[0].getFile();
-        setExercise(first);
+        addExerciseFiles([first]);
         if (launchParams.files.length >= 2) {
           const second = await launchParams.files[1].getFile();
-          setAttempt(second);
+          addAttemptFiles([second]);
         }
       } catch {}
     });

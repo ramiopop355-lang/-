@@ -461,6 +461,28 @@ export default function Login() {
             </div>
           </div>
 
+          {/* Coming Soon — إعلان التطبيقات القادمة */}
+          <div className="px-6 pt-3 pb-1">
+            <div
+              className="relative overflow-hidden rounded-xl px-3 py-2.5 flex items-center justify-center gap-2 text-center"
+              style={{
+                background: "linear-gradient(135deg, rgba(99,102,241,0.08) 0%, rgba(139,92,246,0.10) 50%, rgba(236,72,153,0.06) 100%)",
+                border: "1px solid rgba(139,92,246,0.18)",
+              }}
+            >
+              <span className="text-base leading-none animate-pulse" aria-hidden="true">✨</span>
+              <p className="text-[12px] sm:text-xs font-semibold leading-snug text-foreground/85">
+                <span className="font-black" style={{ fontFamily: "serif" }}>Σ</span>
+                {" "}سِيغْمَا في{" "}
+                <span className="text-indigo-600 dark:text-indigo-400 font-extrabold">الفيزياء</span>
+                {" "}و{" "}
+                <span className="text-fuchsia-600 dark:text-fuchsia-400 font-extrabold">العلوم الطبيعية</span>
+                {" "}
+                <span className="inline-block ml-1 px-1.5 py-0.5 rounded-md text-[10px] font-black bg-gradient-to-l from-indigo-500 to-fuchsia-500 text-white shadow-sm">قريباً</span>
+              </p>
+            </div>
+          </div>
+
           {/* Footer */}
           <div className="border-t border-border px-6 py-3 flex items-center justify-between">
             <div className="flex items-center gap-1.5 flex-wrap">
