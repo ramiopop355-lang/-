@@ -6,3 +6,9 @@ id = "deyOyMkpxhx9M7Aoy72pH"
 uri = "file://.local/sigma-keystore-credentials.txt"
 type = "text"
 title = "بيانات توقيع التطبيق + خطوات GitHub Secrets"
+
+[[outputs]]
+id = "TTCFbm-2oV8_-U8BvbxcJ"
+uri = "file://.github/workflows/build-android.yml"
+type = "unspecified"
+title = "ملف GitHub Actions Workflow (انسخه لتلصقه على GitHub)"
