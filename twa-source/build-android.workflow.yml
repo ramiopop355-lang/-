@@ -11,7 +11,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -22,50 +22,42 @@ jobs:
         with:
           java-version: "17"
           distribution: "temurin"
+          cache: "gradle"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: "build-tools;33.0.2 platforms;android-33 platform-tools"
+      - name: Accept Android SDK licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses 2>/dev/null || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" 2>/dev/null || true
 
       - name: Decrypt signing keystore
-        env:
-          KEYSTORE_DECRYPT_PASSWORD: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD || 'SigmaBac2026!' }}
         run: |
-          if [ ! -f twa-source/sigma-release.keystore.enc ]; then
-            echo "::error::Encrypted keystore is missing"
-            exit 1
-          fi
           openssl enc -d -aes-256-cbc -pbkdf2 -iter 100000 \
             -in twa-source/sigma-release.keystore.enc \
             -out twa-android/sigma-release.keystore \
-            -pass pass:"$KEYSTORE_DECRYPT_PASSWORD"
-          echo "Keystore decrypted ($(wc -c < twa-android/sigma-release.keystore) bytes)"
+            -pass pass:"SigmaBac2026!"
+          echo "Keystore OK ($(stat -c%s twa-android/sigma-release.keystore) bytes)"
 
       - name: Build signed AAB
         working-directory: twa-android
         env:
-          SIGMA_KEYSTORE_PATH: ./sigma-release.keystore
-          SIGMA_STORE_PASSWORD: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD || 'SigmaBac2026!' }}
-          SIGMA_KEY_PASSWORD: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD || 'SigmaBac2026!' }}
+          SIGMA_STORE_PASSWORD: "SigmaBac2026!"
+          SIGMA_KEY_PASSWORD: "SigmaBac2026!"
         run: |
           chmod +x gradlew
           ./gradlew :app:bundleRelease --no-daemon --stacktrace
-          echo "---ARTIFACTS---"
-          find app/build/outputs -type f -name "*.aab" -o -name "*.apk"
+          echo "=== Output files ==="
+          find app/build/outputs -type f
 
-      - name: Upload AAB
+      - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sigma-android-release
-          path: |
-            twa-android/app/build/outputs/bundle/release/app-release.aab
-            twa-android/app/build/outputs/apk/release/*.apk
+          name: sigma-android-aab
+          path: twa-android/app/build/outputs/bundle/release/app-release.aab
           if-no-files-found: error
           retention-days: 90
 
       - name: Build summary
-        if: always()
+        if: success()
         run: |
-          echo "## Sigma Android Build" >> $GITHUB_STEP_SUMMARY
-          echo "Download \`sigma-android-release\` artifact above and upload \`app-release.aab\` to Google Play Console." >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Sigma Android Build" >> $GITHUB_STEP_SUMMARY
+          echo "Download **sigma-android-aab** artifact above, then upload \`app-release.aab\` to Google Play Console → Internal Testing." >> $GITHUB_STEP_SUMMARY
