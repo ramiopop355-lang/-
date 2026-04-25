@@ -36,6 +36,21 @@ jobs:
       - name: Install Bubblewrap
         run: npm install -g @bubblewrap/cli@1.21.0
 
+      - name: Configure Bubblewrap (non-interactive)
+        run: |
+          mkdir -p ~/.bubblewrap
+          cat > ~/.bubblewrap/config.json <<EOF
+          {
+            "jdkPath": "$JAVA_HOME",
+            "androidSdkPath": "$ANDROID_HOME"
+          }
+          EOF
+          echo "--- bubblewrap config ---"
+          cat ~/.bubblewrap/config.json
+          echo ""
+          echo "JAVA_HOME=$JAVA_HOME"
+          echo "ANDROID_HOME=$ANDROID_HOME"
+
       - name: Decrypt signing keystore
         env:
           KEYSTORE_DECRYPT_PASSWORD: ${{ secrets.KEYSTORE_DECRYPT_PASSWORD }}
