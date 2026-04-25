@@ -12,3 +12,9 @@ id = "TTCFbm-2oV8_-U8BvbxcJ"
 uri = "file://.github/workflows/build-android.yml"
 type = "unspecified"
 title = "ملف GitHub Actions Workflow (انسخه لتلصقه على GitHub)"
+
+[[outputs]]
+id = "oYgQ9luw8vrOjvRiMQqz9"
+uri = "file://twa-source/build-android.workflow.yml"
+type = "unspecified"
+title = "محتوى ملف Workflow (انسخه والصقه على GitHub)"
