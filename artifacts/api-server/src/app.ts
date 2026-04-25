@@ -80,6 +80,25 @@ const staticDir = candidatePaths.find((p) => fs.existsSync(p)) ?? candidatePaths
 
 if (fs.existsSync(staticDir)) {
   logger.info({ staticDir }, "Serving static frontend files (br + gzip + cached)");
+
+  // ── /.well-known/* — يُقدَّم كملفات حقيقية بـ MIME الصحيح (assetlinks.json
+  //    لا بد أن يصل لجوجل كـ application/json حتى يتحقق من ربط TWA) ─────
+  const wellKnownDir = path.join(staticDir, ".well-known");
+  if (fs.existsSync(wellKnownDir)) {
+    app.use(
+      "/.well-known",
+      express.static(wellKnownDir, {
+        dotfiles: "allow",
+        setHeaders: (res, filePath) => {
+          if (filePath.endsWith("assetlinks.json")) {
+            res.setHeader("Content-Type", "application/json; charset=utf-8");
+            res.setHeader("Cache-Control", "public, max-age=300"); // 5 دقائق فقط — حتى نتمكّن من تحديث SHA-256 بسرعة
+          }
+        },
+      }),
+    );
+  }
+
   app.use(
     expressStaticGzip(staticDir, {
       enableBrotli: true,
@@ -88,6 +107,7 @@ if (fs.existsSync(staticDir)) {
       serveStatic: {
         maxAge: "1y",
         immutable: true,
+        dotfiles: "allow",
         setHeaders: (res, filePath) => {
           if (filePath.endsWith("index.html") || filePath.endsWith("sw.js")) {
             res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -97,8 +117,8 @@ if (fs.existsSync(staticDir)) {
     }),
   );
 
-  // SPA fallback — يُرسل index.html لأي مسار غير API
-  app.get(/^\/(?!api).*/, (_req: Request, res: Response, next: NextFunction) => {
+  // SPA fallback — يُرسل index.html لأي مسار غير API وغير .well-known
+  app.get(/^\/(?!api|\.well-known).*/, (_req: Request, res: Response, next: NextFunction) => {
     const indexPath = path.join(staticDir, "index.html");
     if (fs.existsSync(indexPath)) {
       res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
