@@ -54,7 +54,7 @@ const SECTIONS = [
     content: [
       "لأي استفسار قانوني أو تقني، يمكنك مراسلتنا عبر البريد الإلكتروني:",
     ],
-    email: "meradawajed@gmail.com",
+    email: "wadjed.n.merada@ens-lagh.dz",
   },
 ];
 

@@ -48,7 +48,7 @@ const SECTIONS = [
     title: "6. التواصل والاستفسارات",
     content: [
       "لأي سؤال أو طلب متعلق بخصوصيتك، يمكنك التواصل معنا عبر البريد الإلكتروني:",
-      "📧 meradawajed@gmail.com",
+      "📧 wadjed.n.merada@ens-lagh.dz",
     ],
   },
 ];
